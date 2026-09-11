@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:movies/ui/main_screen.dart';
 import 'package:movies/ui/theme/theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const ProviderScope(child: MainApp()));
 }
 
 class MainApp extends StatefulWidget {
