@@ -3,7 +3,6 @@ import 'package:movies/ui/screens/home/home_screen.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 class MainScreen extends StatefulWidget {
-
   const MainScreen({super.key});
 
   @override
@@ -11,7 +10,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-
   var index = 0;
   final List<Widget> screens = <Widget>[];
 
@@ -26,6 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       body: screens[index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
@@ -51,4 +50,4 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
-} 
+}
