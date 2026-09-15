@@ -42,7 +42,9 @@ dependencies:
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
   auto_size_text: ^3.0.0
-  pod_player: ^0.2.2
+  media_kit: ^1.2.0
+  media_kit_video: ^1.0.0
+  media_kit_libs_windows_video: ^1.0.11
 
 dev_dependencies:
   flutter_test:

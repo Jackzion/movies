@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/ui/theme/theme.dart';
-import 'package:pod_player/pod_player.dart';
-import 'package:movies/utils/utils.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 class VideoPage extends ConsumerStatefulWidget {
   final String movieVideo;
@@ -12,35 +12,44 @@ class VideoPage extends ConsumerStatefulWidget {
 }
 
 class _VideoPageState extends ConsumerState<VideoPage> {
-  late final PodPlayerController podPlayerController;
+  late final Player player;
+  late final VideoController controller;
 
   @override
   void initState() {
     super.initState();
-    // 1
-    final playVideoFrom = PlayVideoFrom.youtube(
-      youtubeUrlFromId(widget.movieVideo),
+    // 直接用 media_kit,Windows desktop 上最稳的视频方案
+    // (pod_player 就是包了一层 media_kit,直接用更可控)
+    player = Player();
+    controller = VideoController(player);
+
+    // 接住播放错误,避免卡死 UI
+    player.stream.error.listen((String error) {
+      debugPrint('Player error: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('视频错误: $error')),
+        );
+      }
+    });
+
+    // 临时用 .mp4 直链测,先验证 media_kit 在 Windows desktop 上能跑
+    // (bee.mp4 是 Flutter 官方测试视频)
+    player.open(
+      Media(
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+      ),
     );
-    // 2
-    podPlayerController = PodPlayerController(
-      playVideoFrom: playVideoFrom,
-      podPlayerConfig: const PodPlayerConfig(autoPlay: false),
-    )..initialise();
   }
 
   @override
   void dispose() {
-    // 3
-    podPlayerController.dispose();
+    player.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return getVideoPlayer(context);
-  }
-
-  Widget getVideoPlayer(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: screenBackground,
@@ -56,10 +65,15 @@ class _VideoPageState extends ConsumerState<VideoPage> {
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // 视频渲染区:Video widget + VideoController
             Expanded(
-              child: PodVideoPlayer(
-                controller: podPlayerController,
-                matchVideoAspectRatioToFrame: true,
+              child: Video(
+                controller: controller,
+                fit: BoxFit.contain,
+                // 自带 Material 风格控件(播放/暂停/进度条)
+                controls: (VideoState state) {
+                  return MaterialVideoControls(state);
+                },
               ),
             ),
           ],
