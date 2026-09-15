@@ -8,6 +8,10 @@ Widget addHorizontalSpace(double amount) {
   return SizedBox(width: amount);
 }
 
+String youtubeUrlFromId(String videoId) {
+return 'https://www.youtube.com/watch?v=$videoId';
+}
+
 enum Sorting {
   aToz(name: 'A-Z'),
   zToa(name: 'Z-A'),
