@@ -30,7 +30,11 @@ class GenreSection extends ConsumerStatefulWidget {
 class _GenreSectionState extends ConsumerState<GenreSection> {
   @override
   Widget build(BuildContext context) {
-    return Material(
+    var genreChips = getGenreChips();
+    return SliverList(
+      delegate: SliverChildListDelegate(
+        [
+          Material(
       // 透明背景,避免 MergeableMaterial 的 layout 坑
       color: Colors.transparent,
       child: Column(
@@ -82,15 +86,31 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
             child: widget.isExpanded
                 ? Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: getGenreChips(),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      // 1
+                      itemCount: genreChips.length,
+                      // 2
+                      gridDelegate:
+                          // 3
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 100,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 1.5,
+                            mainAxisSpacing: 0,
+                          ),
+                      // 4
+                      itemBuilder: (BuildContext context, int index) {
+                        return genreChips[index];
+                      },
                     ),
                   )
                 : const SizedBox(width: double.infinity, height: 0),
           ),
         ],
+      ),
+        ),
+      ],
       ),
     );
   }

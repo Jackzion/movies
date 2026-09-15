@@ -7,8 +7,10 @@ typedef OnSortSelected = void Function(Sorting);
 
 class SortPicker extends ConsumerStatefulWidget {
   final Sorting selectedSort;
+  final bool useSliver;
   final OnSortSelected onSortSelected;
   const SortPicker({
+    required this.useSliver,
     required this.selectedSort,
     required this.onSortSelected,
     super.key,
@@ -21,6 +23,14 @@ class _SortPickerState extends ConsumerState<SortPicker> {
   Sorting selectedSort = Sorting.aToz;
   @override
   Widget build(BuildContext context) {
+    if (widget.useSliver) {
+      return SliverToBoxAdapter(child: buildRow());
+    } else {
+      return buildRow();
+    }
+  }
+
+  Widget buildRow() {
     return Row(
       children: [
         const Spacer(),
@@ -35,22 +45,21 @@ class _SortPickerState extends ConsumerState<SortPicker> {
           },
           itemBuilder: (BuildContext context) {
             // 4
-            return Sorting.values.mapIndexed<PopupMenuItem<Sorting>>((
-              int index,
-              Sorting sort,
-            ) {
-              // 5
-              return CheckedPopupMenuItem<Sorting>(
-                checked: selectedSort == sort,
-                value: sort,
-                onTap: () {
-                  setState(() {
-                    selectedSort = sort;
-                  });
-                },
-                child: Text(sort.name),
-              );
-            }).toList();
+            return Sorting.values.mapIndexed<PopupMenuItem<Sorting>>(
+              (int index, Sorting sort) {
+                // 5
+                return CheckedPopupMenuItem<Sorting>(
+                  checked: selectedSort == sort,
+                  value: sort,
+                  onTap: () {
+                    setState(() {
+                      selectedSort = sort;
+                    });
+                  },
+                  child: Text(sort.name),
+                );
+              },
+            ).toList();
           },
         ),
       ],

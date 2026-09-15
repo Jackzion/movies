@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:movies/utils/utils.dart';
+
 import 'movie_row.dart';
+
 import 'package:movies/ui/screens/home/home_screen_image.dart';
 
 typedef OnMovieTap = void Function(int movieId);
@@ -15,12 +17,13 @@ class VerticalMovieList extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        MovieRow(movie: images[0]),
-        addVerticalSpace(10),
-        MovieRow(movie: images[1]),
-      ],
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return MovieRow(movie: movies[index]);
+        },
+        childCount: movies.length,
+      ),
     );
   }
 }

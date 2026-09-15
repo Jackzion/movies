@@ -4,8 +4,10 @@ import 'package:movies/ui/screens/genres/sort_picker.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/ui/screens/genres/genre_search_row.dart';
 import 'package:movies/ui/screens/genres/genre_section.dart';
+import 'package:movies/ui/widgets/sliver_divider.dart';
 import 'package:movies/ui/widgets/vert_movie_list.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/ui/screens/home/home_screen_image.dart';
 
 class GenreScreen extends ConsumerWidget {
   const GenreScreen({super.key});
@@ -16,44 +18,52 @@ class GenreScreen extends ConsumerWidget {
       child: Container(
         color: screenBackground,
         child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16.0, 0.0, 24.0),
-                  child: Text(
-                    'Find a Movie',
-                    style: Theme.of(context).textTheme.titleLarge,
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  // 标题 + 搜索框(两个 box widget 包在 SliverList 里)
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16.0, 0.0, 24.0),
+                          child: Text(
+                            'Find a Movie',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                        GenreSearchRow((searchString) {}),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(child: GenreSearchRow((searchString) {})),
-              ],
+                  // GenreSection 自己也是 sliver(内部 SliverList 包了 Material)
+                  ValueListenableBuilder<bool>(
+                    valueListenable: expandedNotifier,
+                    builder: (BuildContext context, bool value, Widget? child) {
+                      return GenreSection(
+                        genreStates: genres,
+                        isExpanded: value,
+                        onGenresExpanded: (expanded) {
+                          expandedNotifier.value = expanded;
+                        },
+                        onGenresSelected: (List<GenreState> states) {},
+                      );
+                    },
+                  ),
+                  // 分割线用 SliverDivider
+                  const SliverDivider(),
+                  // SortPicker 用 useSliver: true 时返回 SliverToBoxAdapter
+                  SortPicker(
+                    selectedSort: Sorting.aToz,
+                    onSortSelected: (Sorting sort) {},
+                    useSliver: true,
+                  ),
+                  // VerticalMovieList 自己就是 SliverList
+                  VerticalMovieList(movies: images, onMovieTap: (movieId) {}),
+                ],
+              ),
             ),
-
-            // 用 AnimatedSize 替代 ExpansionPanelList,直接展开,
-            // 不需要任何外层高度包裹
-            ValueListenableBuilder<bool>(
-              valueListenable: expandedNotifier,
-              builder: (BuildContext context, bool value, Widget? child) {
-                return GenreSection(
-                  genreStates: genres,
-                  isExpanded: value,
-                  onGenresExpanded: (expanded) {
-                    expandedNotifier.value = expanded;
-                  },
-                  onGenresSelected: (List<GenreState> states) {},
-                );
-              },
-            ),
-
-            const Spacer(),
-            const Divider(),
-            SortPicker(selectedSort: Sorting.aToz, onSortSelected: (Sorting sort) {}),
-            VerticalMovieList(movies: [], onMovieTap: (movieId) {}),
           ],
         ),
       ),
