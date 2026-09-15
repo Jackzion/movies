@@ -114,5 +114,21 @@ ThemeData createTheme() {
       showUnselectedLabels: true,
       unselectedItemColor: posterBorder,
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: searchBarBackground,
+      labelTextStyle: WidgetStateTextStyle.resolveWith((
+        Set<WidgetState> states,
+      ) {
+        // 选中态用白色,未选中态用 posterBorder
+        if (states.contains(WidgetState.selected)) {
+          return TextStyle(color: Colors.white);
+        }
+        return TextStyle(color: posterBorder);
+      }),
+      iconTheme: WidgetStateProperty.all<IconThemeData>(
+        IconThemeData(color: Colors.white),
+      ),
+      indicatorColor: posterBorder,
+    ),
   );
 }
