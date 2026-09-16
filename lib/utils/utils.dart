@@ -10,8 +10,10 @@ Widget addHorizontalSpace(double amount) {
 
 typedef OnMovieTap = void Function(int movieId);
 
+typedef OnMovieVideoTap = void Function(String video);
+
 String youtubeUrlFromId(String videoId) {
-return 'https://www.youtube.com/watch?v=$videoId';
+  return 'https://www.youtube.com/watch?v=$videoId';
 }
 
 enum Sorting {

@@ -2,9 +2,11 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/providers.dart';
+import 'package:movies/ui/screens/movie_detail/button_row.dart';
 import 'package:movies/ui/screens/movie_detail/detail_image.dart';
 import 'package:movies/ui/screens/movie_detail/genre_row.dart';
 import 'package:movies/ui/screens/movie_detail/movie_overview.dart';
+import 'package:movies/ui/screens/movie_detail/trailer.dart';
 import 'package:movies/ui/theme/theme.dart';
 
 @RoutePage(name: 'MovieDetailRoute')
@@ -21,6 +23,8 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
   Widget build(BuildContext context) {
     // TODO: 接 genre provider 后改为 ref.watch(genresProvider)
     final genres = ref.read(genresProvider);
+    final favoriteNotifier = ValueNotifier<bool>(false);
+
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -53,6 +57,31 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
                           details:
                               'A movie description goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
                               'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                        ),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: favoriteNotifier,
+                          builder: (
+                            BuildContext context,
+                            bool value,
+                            Widget? child,
+                          ) {
+                            return ButtonRow(
+                              favoriteSelected: favoriteNotifier.value,
+                              onFavoriteSelected: () async {
+                                if (favoriteNotifier.value) {
+                                  favoriteNotifier.value = false;
+                                } else {
+                                  favoriteNotifier.value = true;
+                                }
+                              },
+                            );
+                          },
+                        ),
+                        Trailer(
+                          movieVideos: <String>[],
+                          onVideoTap: (String video) {
+                            // TODO: integrate with video player page
+                          },
                         ),
                       ]),
                     ),
