@@ -3,6 +3,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/providers.dart';
+import 'package:movies/utils/utils.dart';
 
 const delayTime = 1000 * 10;
 const animationTime = 1000;
@@ -27,7 +28,8 @@ const images = [
 
 
 class HomeScreenImage extends ConsumerWidget {
-  const HomeScreenImage({super.key});
+  final OnMovieTap onMovieTap;
+  const HomeScreenImage({super.key, required this.onMovieTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,11 +40,16 @@ class HomeScreenImage extends ConsumerWidget {
       height: 374,
       child: Swiper(
         itemBuilder: (BuildContext context, int index) {
-          return CachedNetworkImage(
-            imageUrl: images[index],
-            fit: BoxFit.fitHeight,
-            height: 374,
-            width: screenWidth,
+          return GestureDetector(
+            onTap: () {
+              onMovieTap(index);
+            },
+            child: CachedNetworkImage(
+              imageUrl: images[index],
+              fit: BoxFit.fitHeight,
+              height: 374,
+              width: screenWidth,
+            ),
           );
         },
         autoplayDelay: delayTime,

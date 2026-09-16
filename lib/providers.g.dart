@@ -20,6 +20,20 @@ final appRouterProvider = Provider<AppRouter>.internal(
 );
 
 typedef AppRouterRef = ProviderRef<AppRouter>;
+String _$genresHash() => r'cff635ef8959229a7b755afb068a6332ff9b33ad';
+
+/// See also [genres].
+@ProviderFor(genres)
+final genresProvider = AutoDisposeProvider<List<GenreState>>.internal(
+  genres,
+  name: r'genresProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$genresHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef GenresRef = AutoDisposeProviderRef<List<GenreState>>;
 String _$movieImagesHash() => r'f0b7efe8a149116efb77a5e46c96488eef442e98';
 
 /// See also [movieImages].

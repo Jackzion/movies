@@ -1,9 +1,32 @@
 import 'package:movies/router/app_routes.dart';
+import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'providers.g.dart';
 
 @Riverpod(keepAlive: true)
 AppRouter appRouter(AppRouterRef ref) => AppRouter();
+
+@riverpod
+List<GenreState> genres(GenresRef ref) => <GenreState>[
+  GenreState(genre: 'Action', isSelected: false),
+  GenreState(genre: 'Adventure', isSelected: false),
+  GenreState(genre: 'Animation', isSelected: false),
+  GenreState(genre: 'Comedy', isSelected: false),
+  GenreState(genre: 'Crime', isSelected: false),
+  GenreState(genre: 'Documentary', isSelected: false),
+  GenreState(genre: 'Drama', isSelected: false),
+  GenreState(genre: 'Family', isSelected: false),
+  GenreState(genre: 'Fantasy', isSelected: false),
+  GenreState(genre: 'History', isSelected: false),
+  GenreState(genre: 'Horror', isSelected: false),
+  GenreState(genre: 'Music', isSelected: false),
+  GenreState(genre: 'Mystery', isSelected: false),
+  GenreState(genre: 'Romance', isSelected: false),
+  GenreState(genre: 'Sci-Fi', isSelected: false),
+  GenreState(genre: 'Thriller', isSelected: false),
+  GenreState(genre: 'War', isSelected: false),
+  GenreState(genre: 'Western', isSelected: false),
+];
 
 @riverpod
 List<String> movieImages(MovieImagesRef ref) => [

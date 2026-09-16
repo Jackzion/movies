@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/screens/home/home_screen_image.dart';
 import 'package:movies/ui/screens/home/title_row.dart';
 import 'package:movies/ui/screens/home/horiz_movies.dart';
@@ -34,7 +35,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              const HomeScreenImage(),
+              HomeScreenImage(
+                onMovieTap: (id) {
+                  context.router.push(MovieDetailRoute(movieId: id));
+                },
+              ),
               TitleRow(text: 'trending ', onMoreClicked: () {}),
               const HorizontalMovies(movies: _images),
               TitleRow(text: 'popular ', onMoreClicked: () {}),

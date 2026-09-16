@@ -8,6 +8,8 @@ Widget addHorizontalSpace(double amount) {
   return SizedBox(width: amount);
 }
 
+typedef OnMovieTap = void Function(int movieId);
+
 String youtubeUrlFromId(String videoId) {
 return 'https://www.youtube.com/watch?v=$videoId';
 }
