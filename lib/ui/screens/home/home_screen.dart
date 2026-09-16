@@ -1,5 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/screens/home/home_screen_image.dart';
 import 'package:movies/ui/screens/home/title_row.dart';
@@ -7,14 +9,14 @@ import 'package:movies/ui/screens/home/horiz_movies.dart';
 import 'package:movies/ui/theme/theme.dart';
 
 @RoutePage(name: 'HomeRoute')
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +39,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
               HomeScreenImage(
                 onMovieTap: (id) {
-                  context.router.push(MovieDetailRoute(movieId: id));
+                  // 直接拿 root AppRouter 实例 push,
+                  // 跳过 nested AutoTabsRouter 的 routeCollection 校验
+                  ref
+                      .read(appRouterProvider)
+                      .push(MovieDetailRoute(movieId: id));
                 },
               ),
               TitleRow(text: 'trending ', onMoreClicked: () {}),

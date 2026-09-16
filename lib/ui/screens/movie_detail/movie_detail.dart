@@ -28,7 +28,7 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
           leading: BackButton(
             color: Colors.white,
             onPressed: () {
-              context.router.maybePopTop();
+              ref.read(appRouterProvider).maybePopTop();
             },
           ),
           centerTitle: false,
