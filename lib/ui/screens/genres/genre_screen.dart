@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/ui/screens/genres/sort_picker.dart';
@@ -9,6 +10,7 @@ import 'package:movies/ui/widgets/vert_movie_list.dart';
 import 'package:movies/utils/utils.dart';
 import 'package:movies/ui/screens/home/home_screen_image.dart';
 
+@RoutePage(name: 'GenreRoute')
 class GenreScreen extends ConsumerWidget {
   const GenreScreen({super.key});
 

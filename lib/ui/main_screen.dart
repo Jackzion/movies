@@ -1,46 +1,43 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:movies/ui/screens/home/home_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:movies/ui/screens/genres/genre_screen.dart';
-import 'package:movies/ui/screens/videos/video_page.dart';
+import 'package:movies/router/app_routes.dart';
+import 'package:movies/ui/theme/theme.dart';
 
-class MainScreen extends StatefulWidget {
+@RoutePage(name: 'MainRoute')
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  var index = 0;
-  final List<Widget> screens = <Widget>[];
-
-  @override
-  void initState() {
-    super.initState();
-    screens.add(const HomeScreen());
-    screens.add(const GenreScreen());
-    screens.add(const VideoPage('QwW5RD02uJo'));
-  }
-
+class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      body: screens[index],
-      bottomNavigationBar: NavigationBar(
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Symbols.genres), label: 'Genre'),
-          NavigationDestination(icon: Icon(Icons.favorite), label: 'Favorites'),
-        ],
-        selectedIndex: index,
-        onDestinationSelected: (int navIndex) {
-          setState(() {
-            index = navIndex;
-          });
-        },
-      ),
+    return AutoTabsScaffold(
+      backgroundColor: screenBackground,
+      routes: const [
+        HomeRoute(),
+        GenreRoute(),
+        FavoriteRoute(),
+      ],
+      bottomNavigationBuilder: (_, tabsRouter) => buildBottomBar(tabsRouter),
+    );
+  }
+
+  Widget buildBottomBar(TabsRouter tabsRouter) {
+    return NavigationBar(
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+        NavigationDestination(icon: Icon(Symbols.genres), label: 'Genre'),
+        NavigationDestination(icon: Icon(Icons.favorite), label: 'Favorites'),
+      ],
+      selectedIndex: tabsRouter.activeIndex,
+      onDestinationSelected: (navIndex) {
+        tabsRouter.setActiveIndex(navIndex);
+      },
     );
   }
 }

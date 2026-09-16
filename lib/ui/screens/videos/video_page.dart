@@ -1,9 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+@RoutePage(name: 'VideoPageRoute')
 class VideoPage extends ConsumerStatefulWidget {
   final String movieVideo;
   const VideoPage(this.movieVideo, {super.key});

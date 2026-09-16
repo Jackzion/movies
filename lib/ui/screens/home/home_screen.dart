@@ -1,9 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:movies/ui/screens/home/home_screen_image.dart';
 import 'package:movies/ui/screens/home/title_row.dart';
 import 'package:movies/ui/screens/home/horiz_movies.dart';
 import 'package:movies/ui/theme/theme.dart';
 
+@RoutePage(name: 'HomeRoute')
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
