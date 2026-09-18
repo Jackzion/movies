@@ -1,9 +1,42 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/utils/utils.dart';
 
-class DetailImage extends StatelessWidget {
-  const DetailImage({super.key});
+/// 电影详情页顶部封面图组件
+/// 支持网络图片加载，带有入场动画效果
+class DetailImage extends ConsumerStatefulWidget {
+  /// 电影封面图片的网络地址
+  final String movieUrl;
+  const DetailImage({required this.movieUrl, super.key});
+
+  @override
+  ConsumerState<DetailImage> createState() => _DetailImageState();
+}
+
+/// DetailImage 的状态类
+/// 使用 SingleTickerProviderStateMixin 提供动画所需的 Ticker
+class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProviderStateMixin {
+  /// 动画控制器，控制图片入场动画
+  /// 动画时长为 2 秒
+  late final AnimationController _controller = AnimationController(
+    duration: const Duration(seconds: 2),
+    vsync: this,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // 组件初始化时立即启动动画
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    // 释放动画控制器资源，防止内存泄漏
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +50,7 @@ class DetailImage extends StatelessWidget {
             Align(
               alignment: Alignment.topCenter,
               child: CachedNetworkImage(
-                imageUrl:
-                    'https://image.tmdb.org/t/p/w780/d5NXSklXo0qyIYkgV94XAgMIckC.jpg',
+                imageUrl: widget.movieUrl,
                 alignment: Alignment.topCenter,
                 fit: BoxFit.fitWidth,
                 height: 200,
