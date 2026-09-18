@@ -28,5 +28,11 @@ class AppRouter extends _$AppRouter {
       page: MovieDetailRoute.page,
       maintainState: false,
     ),
+    // 视频播放页面路由
+    AutoRoute(
+      path: '/video',
+      page: VideoPageRoute.page,
+      maintainState: false,
+    ),
   ];
 }

@@ -5,8 +5,11 @@ import 'package:movies/ui/theme/theme.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+/// 视频播放页面
+/// 使用 media_kit 播放预告片视频，支持播放控制
 @RoutePage(name: 'VideoPageRoute')
 class VideoPage extends ConsumerStatefulWidget {
+  /// 视频 ID 或播放地址
   final String movieVideo;
   const VideoPage(this.movieVideo, {super.key});
   @override
@@ -55,7 +58,11 @@ class _VideoPageState extends ConsumerState<VideoPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: screenBackground,
-        leading: BackButton(color: Colors.white, onPressed: () {}),
+        // 教程这里写的是空函数 () {},按下没反应。改成 maybePop 真正返回上一页
+          leading: BackButton(
+            color: Colors.white,
+            onPressed: () => context.router.maybePop(),
+          ),
         centerTitle: false,
         title: Text('Back', style: Theme.of(context).textTheme.headlineMedium),
       ),
