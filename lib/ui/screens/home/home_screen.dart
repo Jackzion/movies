@@ -7,7 +7,10 @@ import 'package:movies/ui/screens/home/home_screen_image.dart';
 import 'package:movies/ui/screens/home/title_row.dart';
 import 'package:movies/ui/screens/home/horiz_movies.dart';
 import 'package:movies/ui/theme/theme.dart';
+import 'package:movies/ui/widgets/movie_widget.dart';
 
+/// 主页
+/// 展示轮播图和不同分类的电影列表
 @RoutePage(name: 'HomeRoute')
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +22,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
+    // 从 provider 获取电影图片列表
+    final movies = ref.read(movieImagesProvider);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       body: SingleChildScrollView(
@@ -38,37 +44,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
 
               HomeScreenImage(
-                onMovieTap: (id) {
-                  // 直接拿 root AppRouter 实例 push,
-                  // 跳过 nested AutoTabsRouter 的 routeCollection 校验
-                  ref
-                      .read(appRouterProvider)
-                      .push(MovieDetailRoute(movieId: id));
-                },
+                onMovieTap: onMovieTap,
               ),
               TitleRow(text: 'trending ', onMoreClicked: () {}),
-              const HorizontalMovies(movies: _images),
+              HorizontalMovies(
+                movies: movies,
+                onMovieTap: onMovieTap,
+                movieType: MovieType.trending,
+              ),
               TitleRow(text: 'popular ', onMoreClicked: () {}),
-              const HorizontalMovies(movies: _images),
+              HorizontalMovies(
+                movies: movies,
+                onMovieTap: onMovieTap,
+                movieType: MovieType.popular,
+              ),
               TitleRow(text: 'top-rated ', onMoreClicked: () {}),
-              const HorizontalMovies(movies: _images),
+              HorizontalMovies(
+                movies: movies,
+                onMovieTap: onMovieTap,
+                movieType: MovieType.topRated,
+              ),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-const List<String> _images = <String>[
-  'http://image.tmdb.org/t/p/w780/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg',
-  'http://image.tmdb.org/t/p/w780/gKkl37BQuKTanygYQG1pyYgLVgf.jpg',
-  'http://image.tmdb.org/t/p/w780/4xJd3uwtL1vCuZgEfEc8JXI9Uyx.jpg',
-  'http://image.tmdb.org/t/p/w780/uuA01PTtPombRPvL9dvsBqOBJWm.jpg',
-  'http://image.tmdb.org/t/p/w780/H6vke7zGiuLsz4v4RPeReb9rsv.jpg',
-  'http://image.tmdb.org/t/p/w780/e1J2oNzSBdou01sUvriVuoYp0pJ.jpg',
-  'http://image.tmdb.org/t/p/w780/hu40Uxp9WtpL34jv3zyWLb5zEVY.jpg',
-  'http://image.tmdb.org/t/p/w780/pKaA8VvfkNfEMUPMiiuL5qSPQYy.jpg',
-  'http://image.tmdb.org/t/p/w780/zK2sFxZcelHJRPVr242rxy5VK4T.jpg',
-  'http://image.tmdb.org/t/p/w780/7qxG0zyt29BI0IzFDfsps62kbQi.jpg',
-];
+  /// 电影点击回调，跳转到电影详情页
+  void onMovieTap(int movieId) {
+    context.router.push(MovieDetailRoute(movieId: movieId));
+  }
+}

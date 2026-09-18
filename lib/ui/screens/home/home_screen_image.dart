@@ -5,35 +5,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/utils/utils.dart';
 
+/// 轮播图自动播放延迟时间（毫秒）
 const delayTime = 1000 * 10;
+/// 轮播图动画过渡时间（毫秒）
 const animationTime = 1000;
 
-const images = [
-'http://image.tmdb.org/t/p/w780/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg',
-'http://image.tmdb.org/t/p/w780/gKkl37BQuKTanygYQG1pyYgLVgf.jpg',
-'http://image.tmdb.org/t/p/w780/4xJd3uwtL1vCuZgEfEc8JXI9Uyx.jpg',
-'http://image.tmdb.org/t/p/w780/uuA01PTtPombRPvL9dvsBqOBJWm.jpg',
-'http://image.tmdb.org/t/p/w780/H6vke7zGiuLsz4v4RPeReb9rsv.jpg',
-'http://image.tmdb.org/t/p/w780/e1J2oNzSBdou01sUvriVuoYp0pJ.jpg',
-'http://image.tmdb.org/t/p/w780/hu40Uxp9WtpL34jv3zyWLb5zEVY.jpg',
-'http://image.tmdb.org/t/p/w780/pKaA8VvfkNfEMUPMiiuL5qSPQYy.jpg',
-'http://image.tmdb.org/t/p/w780/zK2sFxZcelHJRPVr242rxy5VK4T.jpg',
-'http://image.tmdb.org/t/p/w780/7qxG0zyt29BI0IzFDfsps62kbQi.jpg',
-'http://image.tmdb.org/t/p/w780/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
-'http://image.tmdb.org/t/p/w780/zDi2U7WYkdIoGYHcYbM9X5yReVD.jpg',
-'http://image.tmdb.org/t/p/w780/cxevDYdeFkiixRShbObdwAHBZry.jpg',
-'http://image.tmdb.org/t/p/w780/uXUs1fwSuE06LgYETw2mi4JxQvc.jpg'
-];
-
-
-
+/// 首页轮播图组件
+/// 展示电影封面图片，支持 Hero 动画过渡效果
 class HomeScreenImage extends ConsumerWidget {
+  /// 点击回调函数
   final OnMovieTap onMovieTap;
   const HomeScreenImage({super.key, required this.onMovieTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final images = ref.watch(movieImagesProvider);
+    // 从 provider 获取电影图片列表
+    final movies = ref.watch(movieImagesProvider);
     final screenWidth = MediaQuery.of(context).size.width - 32;
 
     return SizedBox(
@@ -42,20 +29,27 @@ class HomeScreenImage extends ConsumerWidget {
         itemBuilder: (BuildContext context, int index) {
           return GestureDetector(
             onTap: () {
+              // 设置当前的 Hero 标签，用于详情页动画
+              // 标签格式：电影地址 + 'swiper'
+              ref.read(heroTagProvider.notifier).state =
+                  movies[index] + 'swiper';
               onMovieTap(index);
             },
-            child: CachedNetworkImage(
-              imageUrl: images[index],
-              fit: BoxFit.fitHeight,
-              height: 374,
-              width: screenWidth,
+            child: Hero(
+              tag: movies[index] + 'swiper',
+              child: CachedNetworkImage(
+                imageUrl: movies[index],
+                fit: BoxFit.fitHeight,
+                height: 374,
+                width: screenWidth,
+              ),
             ),
           );
         },
         autoplayDelay: delayTime,
         duration: animationTime,
         itemWidth: screenWidth,
-        itemCount: images.length,
+        itemCount: movies.length,
         pagination: const SwiperPagination(),
         control: const SwiperControl(),
       ),

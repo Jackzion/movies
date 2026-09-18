@@ -45,3 +45,9 @@ List<String> movieImages(MovieImagesRef ref) => [
 'http://image.tmdb.org/t/p/w780/cxevDYdeFkiixRShbObdwAHBZry.jpg',
 'http://image.tmdb.org/t/p/w780/uXUs1fwSuE06LgYETw2mi4JxQvc.jpg'
 ];
+
+/// Hero 动画标签状态提供者
+/// 用于在不同页面间传递 Hero 动画的唯一标签
+final heroTagProvider = StateProvider<String>((ref) {
+  return '';
+});

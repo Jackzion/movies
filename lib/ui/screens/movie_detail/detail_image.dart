@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/providers.dart';
 import 'package:movies/utils/utils.dart';
 
 /// 电影详情页顶部封面图组件
-/// 支持网络图片加载，带有入场动画效果
+/// 支持网络图片加载，带有入场动画和 Hero 过渡效果
 class DetailImage extends ConsumerStatefulWidget {
   /// 电影封面图片的网络地址
   final String movieUrl;
@@ -47,6 +48,8 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    // 从 provider 获取当前的 Hero 动画标签
+    final heroTag = ref.watch(heroTagProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     return Padding(
       padding: const EdgeInsets.only(left: 8.0, right: 8),
@@ -56,14 +59,17 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
           children: [
             Align(
               alignment: Alignment.topCenter,
-              child: FadeTransition(
-                opacity: _animation,
-                child: CachedNetworkImage(
-                  imageUrl: widget.movieUrl,
-                  alignment: Alignment.topCenter,
-                  fit: BoxFit.fitWidth,
-                  height: 200,
-                  width: screenWidth,
+              child: Hero(
+                tag: heroTag,
+                child: FadeTransition(
+                  opacity: _animation,
+                  child: CachedNetworkImage(
+                    imageUrl: widget.movieUrl,
+                    alignment: Alignment.topCenter,
+                    fit: BoxFit.fitWidth,
+                    height: 200,
+                    width: screenWidth,
+                  ),
                 ),
               ),
             ),
