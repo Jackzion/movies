@@ -24,6 +24,13 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
     vsync: this,
   );
 
+  /// 曲线动画，为控制器添加缓动效果
+  /// 使用 easeIn 曲线，使动画开始时较慢，结束时较快
+  late final Animation<double> _animation = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeIn,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -49,12 +56,15 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
           children: [
             Align(
               alignment: Alignment.topCenter,
-              child: CachedNetworkImage(
-                imageUrl: widget.movieUrl,
-                alignment: Alignment.topCenter,
-                fit: BoxFit.fitWidth,
-                height: 200,
-                width: screenWidth,
+              child: FadeTransition(
+                opacity: _animation,
+                child: CachedNetworkImage(
+                  imageUrl: widget.movieUrl,
+                  alignment: Alignment.topCenter,
+                  fit: BoxFit.fitWidth,
+                  height: 200,
+                  width: screenWidth,
+                ),
               ),
             ),
             Align(
