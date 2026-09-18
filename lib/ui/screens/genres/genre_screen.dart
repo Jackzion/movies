@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/providers.dart';
+import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/screens/genres/sort_picker.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/ui/screens/genres/genre_search_row.dart';
@@ -18,6 +19,7 @@ class GenreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final genres = ref.read(genresProvider);
+    final movies = ref.watch(movieImagesProvider);
     final genresNotifier = expandedNotifier;
     return SafeArea(
       child: Container(
@@ -65,7 +67,12 @@ class GenreScreen extends ConsumerWidget {
                     useSliver: true,
                   ),
                   // VerticalMovieList 自己就是 SliverList
-                  VerticalMovieList(movies: images, onMovieTap: (movieId) {}),
+                  VerticalMovieList(
+                    movies: movies,
+                    onMovieTap: (movieId) {
+                      context.router.push(MovieDetailRoute(movieId: movieId));
+                    },
+                  ),
                 ],
               ),
             ),
