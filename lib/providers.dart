@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
