@@ -13,7 +13,7 @@ const animationTime = 1000;
 
 /// 首页轮播图组件
 /// 展示电影封面图片，支持 Hero 动画过渡效果
-class HomeScreenImage extends StatelessWidget {
+class HomeScreenImage extends ConsumerWidget {
   /// 电影视图模型
   final MovieViewModel movieViewModel;
   /// 点击回调函数
@@ -26,7 +26,7 @@ class HomeScreenImage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final screenWidth = MediaQuery.of(context).size.width - 32;
 
     return SizedBox(
