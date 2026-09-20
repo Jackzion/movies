@@ -1,19 +1,23 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/data/models/movie.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
+import 'package:movies/ui/movie_viewmodel.dart';
 import 'package:movies/ui/screens/movie_detail/button_row.dart';
 import 'package:movies/ui/screens/movie_detail/detail_image.dart';
 import 'package:movies/ui/screens/movie_detail/genre_row.dart';
 import 'package:movies/ui/screens/movie_detail/movie_overview.dart';
 import 'package:movies/ui/screens/movie_detail/trailer.dart';
+import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/ui/widgets/horiz_cast.dart';
+import 'package:movies/ui/widgets/not_ready.dart';
 
-@RoutePage(name: 'MovieDetailRoute')
 /// 电影详情页面
 /// 展示电影的封面图、类型、简介、收藏按钮和预告片列表
+@RoutePage(name: 'MovieDetailRoute')
 class MovieDetail extends ConsumerStatefulWidget {
   /// 电影 ID，用于从电影列表中获取对应电影数据
   final int movieId;
@@ -24,12 +28,35 @@ class MovieDetail extends ConsumerStatefulWidget {
 }
 
 class _MovieDetailState extends ConsumerState<MovieDetail> {
+  late MovieViewModel movieViewModel;
+  List<GenreState> genreStates = [];
+  late Movie currentMovie;
+
   @override
   Widget build(BuildContext context) {
-    // TODO: 接 genre provider 后改为 ref.watch(genresProvider)
-    final genres = ref.read(genresProvider);
-    // 从电影图片列表中获取所有电影封面地址
-    final movies = ref.read(movieImagesProvider);
+    // 监听异步提供者状态
+    final movieViewModelAsync = ref.watch(movieViewModelProvider);
+    return movieViewModelAsync.when(
+      error: (e, st) => Text(e.toString()),
+      loading: () => const NotReady(),
+      data: (viewModel) {
+        movieViewModel = viewModel;
+        currentMovie = movieViewModel.findMovieById(widget.movieId);
+        buildGenreState();
+        return buildScreen();
+      },
+    );
+  }
+
+  /// 构建电影类型状态列表
+  void buildGenreState() {
+    genreStates.clear();
+    for (final genre in movieViewModel.movieGenres) {
+      genreStates.add(GenreState(genre: genre, isSelected: false));
+    }
+  }
+
+  Widget buildScreen() {
     final favoriteNotifier = ValueNotifier<bool>(false);
 
     return SafeArea(
@@ -58,13 +85,10 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
                   slivers: [
                     SliverList(
                       delegate: SliverChildListDelegate([
-                        // 根据电影 ID 从列表中获取对应的封面图片地址
-                        Stack(children: [DetailImage(movieUrl: movies[widget.movieId])]),
-                        GenreRow(genres: genres),
+                        Stack(children: [DetailImage(movieUrl: currentMovie.image)]),
+                        GenreRow(genres: genreStates),
                         MovieOverview(
-                          details:
-                              'A movie description goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                              'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                          details: currentMovie.overview,
                         ),
                         ValueListenableBuilder<bool>(
                           valueListenable: favoriteNotifier,
@@ -96,7 +120,6 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
                           movieVideos: const ['U2Qp5pL3ovA'],
                           onVideoTap: (video) {
                             debugPrint('Trailer tapped: $video');
-                            // 教程这里其实是 video id,Trailer 内部拼成缩略图 URL
                             context.router.push(
                               VideoPageRoute(movieVideo: 'U2Qp5pL3ovA'),
                             );
@@ -104,7 +127,6 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
                         ),
                       ]),
                     ),
-                    // HorizontalCast 必须是同级 sliver,不能塞进 SliverChildListDelegate
                     HorizontalCast(castList: ['', '']),
                   ],
                 ),

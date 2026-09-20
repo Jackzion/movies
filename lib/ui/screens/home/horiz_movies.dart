@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movies/data/models/movie.dart';
 import 'package:movies/ui/widgets/movie_widget.dart';
 import 'package:movies/utils/utils.dart';
 
@@ -6,7 +7,7 @@ import 'package:movies/utils/utils.dart';
 /// 支持不同电影类型的展示，点击后跳转到详情页
 class HorizontalMovies extends StatelessWidget {
   /// 电影列表数据
-  final List<String> movies;
+  final List<Movie> movies;
   /// 点击回调函数
   final OnMovieTap onMovieTap;
   /// 电影类型，用于生成唯一的 Hero 标签
@@ -29,8 +30,7 @@ class HorizontalMovies extends StatelessWidget {
         itemBuilder: (context, index) {
           // 使用 MovieWidget 组件展示电影图片
           return MovieWidget(
-            movieId: index,
-            movieUrl: movies[index],
+            movie: movies[index],
             onMovieTap: onMovieTap,
             movieType: movieType,
           );
