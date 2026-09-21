@@ -79,6 +79,7 @@ class _FavoriteScreenState extends ConsumerState<FavoriteScreen> {
                         ),
                         // 排序选择器
                         SortPicker(
+                          selectedSort: selectedSort,
                           useSliver: true,
                           onSortSelected: (sorting) {
                             selectedSort = sorting;
