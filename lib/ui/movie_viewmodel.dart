@@ -1,4 +1,5 @@
 import 'package:movies/data/models/movie.dart';
+import 'package:movies/data/models/favorite.dart';
 
 /// 电影视图模型
 /// 负责管理电影数据的加载和分类
@@ -16,6 +17,10 @@ class MovieViewModel {
   List<Movie> nowPlayingMovies = [];
   /// 所有电影列表
   List<Movie> allMovies = [];
+  /// 收藏电影流
+  Stream<List<Favorite>>? favoriteStream = null;
+  /// 收藏电影列表
+  List<Favorite>? favoriteList = null;
 
   /// 初始化视图模型
   /// 使用 Future.wait 等待所有异步操作完成
@@ -242,5 +247,70 @@ class MovieViewModel {
       ];
     }
     return nowPlayingMovies;
+  }
+
+  /// 创建收藏电影流
+  /// 首次调用时初始化收藏列表，后续直接返回流
+  Stream<List<Favorite>> streamFavorites() {
+    if (favoriteList == null) {
+      favoriteList = [
+        Favorite(
+          movieId: 1,
+          image: 'http://image.tmdb.org/t/p/w780/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg',
+          favorite: false,
+          title: 'Title',
+          overview: 'Overview',
+          popularity: 1.0,
+          releaseDate: DateTime.now(),
+        ),
+        Favorite(
+          movieId: 2,
+          image: 'http://image.tmdb.org/t/p/w780/gKkl37BQuKTanygYQG1pyYgLVgf.jpg',
+          favorite: false,
+          title: 'Title',
+          overview: 'Overview',
+          popularity: 1.0,
+          releaseDate: DateTime.now(),
+        ),
+        Favorite(
+          movieId: 3,
+          image: 'http://image.tmdb.org/t/p/w780/4xJd3uwtL1vCuZgEfEc8JXI9Uyx.jpg',
+          favorite: false,
+          title: 'Title',
+          overview: 'Overview',
+          popularity: 1.0,
+          releaseDate: DateTime.now(),
+        ),
+        Favorite(
+          movieId: 4,
+          image: 'http://image.tmdb.org/t/p/w780/uuA01PTtPombRPvL9dvsBqOBJWm.jpg',
+          favorite: false,
+          title: 'Title',
+          overview: 'Overview',
+          popularity: 1.0,
+          releaseDate: DateTime.now(),
+        ),
+        Favorite(
+          movieId: 5,
+          image: 'http://image.tmdb.org/t/p/w780/H6vke7zGiuLsz4v4RPeReb9rsv.jpg',
+          favorite: false,
+          title: 'Title',
+          overview: 'Overview',
+          popularity: 1.0,
+          releaseDate: DateTime.now(),
+        ),
+      ];
+    }
+    favoriteStream = Stream.value(favoriteList!);
+    return favoriteStream!;
+  }
+
+  /// 更新收藏电影状态
+  void updateFavorite(Favorite favorite) {
+    final index = favoriteList!
+        .indexWhere((favItem) => favItem.movieId == favorite.movieId);
+    if (index != -1) {
+      favoriteList![index] = favorite;
+    }
   }
 }

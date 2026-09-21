@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movies/data/models/favorite.dart';
 
 Widget addVerticalSpace(double amount) {
   return SizedBox(height: amount);
@@ -8,14 +9,20 @@ Widget addHorizontalSpace(double amount) {
   return SizedBox(width: amount);
 }
 
+/// 电影点击回调类型
 typedef OnMovieTap = void Function(int movieId);
 
+/// 视频点击回调类型
 typedef OnMovieVideoTap = void Function(String video);
+
+/// 收藏结果点击回调类型
+typedef OnFavoriteResultsTap = void Function(Favorite favorite);
 
 String youtubeUrlFromId(String videoId) {
   return 'https://www.youtube.com/watch?v=$videoId';
 }
 
+/// 排序方式枚举
 enum Sorting {
   aToz(name: 'A-Z'),
   zToa(name: 'Z-A'),
