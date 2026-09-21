@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/network/anime_api_service.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -8,11 +9,18 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 AppRouter appRouter(AppRouterRef ref) => AppRouter();
 
+/// 动漫 API 服务提供者
+/// 提供 AnimeAPIService 实例
+@Riverpod(keepAlive: true)
+AnimeAPIService animeAPIService(AnimeAPIServiceRef ref) => AnimeAPIService();
+
 /// 动漫视图模型提供者
 /// 异步加载，等待 setup 完成后返回 AnimeViewModel
 @Riverpod(keepAlive: true)
 Future<AnimeViewModel> animeViewModel(AnimeViewModelRef ref) async {
-  final model = AnimeViewModel();
+  final model = AnimeViewModel(
+    animeAPIService: ref.read(animeAPIServiceProvider),
+  );
   await model.setup();
   return model;
 }

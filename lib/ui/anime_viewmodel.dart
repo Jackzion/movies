@@ -1,10 +1,14 @@
 import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/favorite.dart';
+import 'package:movies/network/anime_api_service.dart';
 
 /// 动漫视图模型
 /// 负责管理动漫数据的加载和分类
 /// 包含正在流行、评分最高、最受欢迎、正在上映的动漫列表
 class AnimeViewModel {
+  /// 动漫 API 服务
+  final AnimeAPIService animeAPIService;
+
   /// 动漫类型列表
   late List<String> animeGenres;
   /// 正在流行的动漫列表
@@ -21,6 +25,9 @@ class AnimeViewModel {
   Stream<List<Favorite>>? favoriteStream = null;
   /// 收藏动漫列表
   List<Favorite>? favoriteList = null;
+
+  /// 构造函数
+  AnimeViewModel({required this.animeAPIService});
 
   /// 初始化视图模型
   /// 使用 Future.wait 等待所有异步操作完成
