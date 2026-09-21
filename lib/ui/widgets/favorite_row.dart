@@ -3,25 +3,25 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:movies/data/models/favorite.dart';
 import 'package:movies/utils/utils.dart';
-import 'package:movies/ui/movie_viewmodel.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 
-/// 收藏电影行展示组件
-/// 显示电影封面、标题、年份和收藏按钮
+/// 收藏动漫行展示组件
+/// 显示动漫封面、标题、年份和收藏按钮
 class FavoriteRow extends StatelessWidget {
-  /// 收藏电影数据
+  /// 收藏动漫数据
   final Favorite favorite;
-  /// 电影视图模型
-  final MovieViewModel movieViewModel;
+  /// 动漫视图模型
+  final AnimeViewModel animeViewModel;
   /// 点击回调函数
-  final OnMovieTap onMovieTap;
+  final OnAnimeTap onAnimeTap;
   /// 收藏按钮点击回调
   final OnFavoriteResultsTap onFavoritesTap;
 
   const FavoriteRow({
     super.key,
     required this.favorite,
-    required this.movieViewModel,
-    required this.onMovieTap,
+    required this.animeViewModel,
+    required this.onAnimeTap,
     required this.onFavoritesTap,
   });
 
@@ -34,14 +34,14 @@ class FavoriteRow extends StatelessWidget {
     final imageUrl = favorite.image;
     if (imageUrl.isNotEmpty) {
       return GestureDetector(
-        onTap: () => onMovieTap(favorite.movieId),
+        onTap: () => onAnimeTap(favorite.animeId),
         child: SizedBox(
           height: 148,
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: [
               addHorizontalSpace(16),
-              // 电影封面图片
+              // 动漫封面图片
               SizedBox(
                 height: 140,
                 width: 100,
@@ -74,7 +74,7 @@ class FavoriteRow extends StatelessWidget {
                             ),
                     ),
                   ),
-                  // 电影信息文本
+                  // 动漫信息文本
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -86,7 +86,7 @@ class FavoriteRow extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 电影标题
+                          // 动漫标题
                           SizedBox(
                             width: textWidth,
                             child: AutoSizeText(

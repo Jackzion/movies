@@ -1,8 +1,8 @@
-/// 收藏电影数据模型
-/// 包含电影的基本信息和收藏状态
+/// 收藏动漫数据模型
+/// 包含动漫的基本信息和收藏状态
 class Favorite {
-  /// 电影 ID
-  final int movieId;
+  /// 动漫 ID
+  final int animeId;
   /// 电影封面图片地址
   final String image;
   /// 是否已收藏（可变）
@@ -17,7 +17,7 @@ class Favorite {
   final DateTime releaseDate;
 
   Favorite({
-    required this.movieId,
+    required this.animeId,
     required this.image,
     required this.favorite,
     required this.title,

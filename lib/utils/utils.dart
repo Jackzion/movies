@@ -9,11 +9,11 @@ Widget addHorizontalSpace(double amount) {
   return SizedBox(width: amount);
 }
 
-/// 电影点击回调类型
-typedef OnMovieTap = void Function(int movieId);
+/// 动漫点击回调类型
+typedef OnAnimeTap = void Function(int animeId);
 
 /// 视频点击回调类型
-typedef OnMovieVideoTap = void Function(String video);
+typedef OnAnimeVideoTap = void Function(String video);
 
 /// 收藏结果点击回调类型
 typedef OnFavoriteResultsTap = void Function(Favorite favorite);

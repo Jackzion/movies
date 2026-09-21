@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/data/models/favorite.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
-import 'package:movies/ui/movie_viewmodel.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/ui/screens/genres/sort_picker.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/ui/widgets/vert_favorite_list.dart';
@@ -13,7 +13,7 @@ import 'package:movies/ui/widgets/not_ready.dart';
 import 'package:movies/utils/utils.dart';
 
 /// 收藏页面
-/// 展示用户收藏的电影列表，支持排序和收藏状态更新
+/// 展示用户收藏的动漫列表，支持排序和收藏状态更新
 @RoutePage(name: 'FavoriteRoute')
 class FavoriteScreen extends ConsumerStatefulWidget {
   const FavoriteScreen({super.key});
@@ -23,7 +23,7 @@ class FavoriteScreen extends ConsumerStatefulWidget {
 }
 
 class _FavoriteScreenState extends ConsumerState<FavoriteScreen> {
-  late MovieViewModel movieViewModel;
+  late AnimeViewModel animeViewModel;
   List<Favorite> currentFavorites = [];
   Sorting selectedSort = Sorting.aToz;
   final valueNotifier = ValueNotifier<List<Favorite>>([]);
@@ -31,12 +31,12 @@ class _FavoriteScreenState extends ConsumerState<FavoriteScreen> {
   @override
   Widget build(BuildContext context) {
     // 监听异步提供者状态
-    final movieViewModelAsync = ref.watch(movieViewModelProvider);
-    return movieViewModelAsync.when(
+    final animeViewModelAsync = ref.watch(animeViewModelProvider);
+    return animeViewModelAsync.when(
       error: (e, st) => Text(e.toString()),
       loading: () => const NotReady(),
       data: (viewModel) {
-        movieViewModel = viewModel;
+        animeViewModel = viewModel;
         return buildScreen();
       },
     );
@@ -83,21 +83,21 @@ class _FavoriteScreenState extends ConsumerState<FavoriteScreen> {
                           useSliver: true,
                           onSortSelected: (sorting) {
                             selectedSort = sorting;
-                            sortMovies();
+                            sortAnimes();
                           },
                         ),
-                        // 收藏电影列表
+                        // 收藏动漫列表
                         VerticalFavoriteList(
                           favorites: snapshot.requireData,
-                          movieViewModel: movieViewModel,
-                          onMovieTap: (movieId) {
-                            context.router.push(MovieDetailRoute(movieId: movieId));
+                          animeViewModel: animeViewModel,
+                          onAnimeTap: (animeId) {
+                            context.router.push(AnimeDetailRoute(animeId: animeId));
                           },
                           onFavoritesTap: (Favorite favorite) {
                             setState(() {
                               // 切换收藏状态
                               favorite.favorite = !favorite.favorite;
-                              movieViewModel.updateFavorite(favorite);
+                              animeViewModel.updateFavorite(favorite);
                             });
                           },
                         ),
@@ -113,13 +113,13 @@ class _FavoriteScreenState extends ConsumerState<FavoriteScreen> {
     );
   }
 
-  /// 获取收藏电影流
+  /// 获取收藏动漫流
   Stream<List<Favorite>> getFavoriteStream() {
-    return movieViewModel.streamFavorites();
+    return animeViewModel.streamFavorites();
   }
 
-  /// 对收藏电影列表进行排序
-  void sortMovies() {
+  /// 对收藏动漫列表进行排序
+  void sortAnimes() {
     if (currentFavorites.isEmpty) {
       return;
     }
@@ -141,7 +141,7 @@ class _FavoriteScreenState extends ConsumerState<FavoriteScreen> {
   /// 移除收藏
   Future removeFavorite(Favorite favorite) async {
     setState(() {
-      currentFavorites.removeWhere((fav) => fav.movieId == favorite.movieId);
+      currentFavorites.removeWhere((fav) => fav.animeId == favorite.animeId);
       valueNotifier.value = currentFavorites;
     });
   }

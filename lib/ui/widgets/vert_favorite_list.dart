@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:movies/data/models/favorite.dart';
 import 'package:movies/utils/utils.dart';
-import 'package:movies/ui/movie_viewmodel.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/ui/widgets/favorite_row.dart';
 
-/// 纵向收藏电影列表组件
-/// 展示收藏的电影列表，支持点击和收藏操作
+/// 纵向收藏动漫列表组件
+/// 展示收藏的动漫列表，支持点击和收藏操作
 class VerticalFavoriteList extends StatelessWidget {
-  /// 收藏电影列表
+  /// 收藏动漫列表
   final List<Favorite> favorites;
-  /// 电影视图模型
-  final MovieViewModel movieViewModel;
+  /// 动漫视图模型
+  final AnimeViewModel animeViewModel;
   /// 点击回调函数
-  final OnMovieTap onMovieTap;
+  final OnAnimeTap onAnimeTap;
   /// 收藏按钮点击回调
   final OnFavoriteResultsTap onFavoritesTap;
 
   const VerticalFavoriteList({
     super.key,
     required this.favorites,
-    required this.movieViewModel,
-    required this.onMovieTap,
+    required this.animeViewModel,
+    required this.onAnimeTap,
     required this.onFavoritesTap,
   });
 
@@ -31,9 +31,9 @@ class VerticalFavoriteList extends StatelessWidget {
         (BuildContext context, int index) {
           return FavoriteRow(
             favorite: favorites[index],
-            movieViewModel: movieViewModel,
-            onMovieTap: (id) {
-              onMovieTap(id);
+            animeViewModel: animeViewModel,
+            onAnimeTap: (id) {
+              onAnimeTap(id);
             },
             onFavoritesTap: (favorite) {
               onFavoritesTap(favorite);

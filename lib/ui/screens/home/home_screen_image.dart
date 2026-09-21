@@ -3,7 +3,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/providers.dart';
-import 'package:movies/ui/movie_viewmodel.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/utils.dart';
 
 /// 轮播图自动播放延迟时间（毫秒）
@@ -12,16 +12,16 @@ const delayTime = 1000 * 10;
 const animationTime = 1000;
 
 /// 首页轮播图组件
-/// 展示电影封面图片，支持 Hero 动画过渡效果
+/// 展示动漫封面图片，支持 Hero 动画过渡效果
 class HomeScreenImage extends ConsumerWidget {
-  /// 电影视图模型
-  final MovieViewModel movieViewModel;
+  /// 动漫视图模型
+  final AnimeViewModel animeViewModel;
   /// 点击回调函数
-  final OnMovieTap onMovieTap;
+  final OnAnimeTap onAnimeTap;
 
   const HomeScreenImage({
-    required this.movieViewModel,
-    required this.onMovieTap,
+    required this.animeViewModel,
+    required this.onAnimeTap,
     super.key,
   });
 
@@ -32,22 +32,22 @@ class HomeScreenImage extends ConsumerWidget {
     return SizedBox(
       height: 374,
       child: Swiper(
-        itemCount: movieViewModel.nowPlayingMovies.length,
+        itemCount: animeViewModel.nowPlayingAnimes.length,
         itemBuilder: (BuildContext context, int index) {
-          final currentMovie = movieViewModel.nowPlayingMovies[index];
+          final currentAnime = animeViewModel.nowPlayingAnimes[index];
           // 生成唯一的 Hero 动画标签
-          String uniqueHeroTag = '${currentMovie.image}swiper';
+          String uniqueHeroTag = '${currentAnime.image}swiper';
 
           return GestureDetector(
             onTap: () {
               // 设置当前的 Hero 标签，用于详情页动画
               ref.read(heroTagProvider.notifier).state = uniqueHeroTag;
-              onMovieTap(currentMovie.movieId);
+              onAnimeTap(currentAnime.animeId);
             },
             child: Hero(
               tag: uniqueHeroTag,
               child: CachedNetworkImage(
-                imageUrl: currentMovie.image,
+                imageUrl: currentAnime.image,
                 alignment: Alignment.topCenter,
                 fit: BoxFit.fitHeight,
                 height: 374,

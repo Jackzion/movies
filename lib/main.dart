@@ -25,7 +25,7 @@ class _MainAppState extends ConsumerState<MainApp> {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       routerConfig: router.config(),
-      title: 'Movies',
+      title: 'Anime',
       debugShowCheckedModeBanner: false,
       theme: createTheme(),
     );

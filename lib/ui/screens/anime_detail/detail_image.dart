@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/utils/utils.dart';
 
-/// 电影详情页顶部封面图组件
+/// 动漫详情页顶部封面图组件
 /// 支持网络图片加载，带有入场动画和 Hero 过渡效果
 class DetailImage extends ConsumerStatefulWidget {
-  /// 电影封面图片的网络地址
-  final String movieUrl;
-  const DetailImage({required this.movieUrl, super.key});
+  /// 动漫封面图片的网络地址
+  final String animeUrl;
+  const DetailImage({required this.animeUrl, super.key});
 
   @override
   ConsumerState<DetailImage> createState() => _DetailImageState();
@@ -64,7 +64,7 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
                 child: FadeTransition(
                   opacity: _animation,
                   child: CachedNetworkImage(
-                    imageUrl: widget.movieUrl,
+                    imageUrl: widget.animeUrl,
                     alignment: Alignment.topCenter,
                     fit: BoxFit.fitWidth,
                     height: 200,

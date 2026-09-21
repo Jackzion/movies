@@ -1,25 +1,25 @@
-import 'package:movies/data/models/movie.dart';
+import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/favorite.dart';
 
-/// 电影视图模型
-/// 负责管理电影数据的加载和分类
-/// 包含正在流行、评分最高、最受欢迎、正在上映的电影列表
-class MovieViewModel {
-  /// 电影类型列表
-  late List<String> movieGenres;
-  /// 正在流行的电影列表
-  List<Movie> trendingMovies = [];
-  /// 评分最高的电影列表
-  List<Movie> topRatedMovies = [];
-  /// 最受欢迎的电影列表
-  List<Movie> popularMovies = [];
-  /// 正在上映的电影列表
-  List<Movie> nowPlayingMovies = [];
-  /// 所有电影列表
-  List<Movie> allMovies = [];
-  /// 收藏电影流
+/// 动漫视图模型
+/// 负责管理动漫数据的加载和分类
+/// 包含正在流行、评分最高、最受欢迎、正在上映的动漫列表
+class AnimeViewModel {
+  /// 动漫类型列表
+  late List<String> animeGenres;
+  /// 正在流行的动漫列表
+  List<Anime> trendingAnimes = [];
+  /// 评分最高的动漫列表
+  List<Anime> topRatedAnimes = [];
+  /// 最受欢迎的动漫列表
+  List<Anime> popularAnimes = [];
+  /// 正在上映的动漫列表
+  List<Anime> nowPlayingAnimes = [];
+  /// 所有动漫列表
+  List<Anime> allAnimes = [];
+  /// 收藏动漫流
   Stream<List<Favorite>>? favoriteStream = null;
-  /// 收藏电影列表
+  /// 收藏动漫列表
   List<Favorite>? favoriteList = null;
 
   /// 初始化视图模型
@@ -28,7 +28,7 @@ class MovieViewModel {
     await Future.wait([
       setupConfiguration(),
       setupGenres(),
-      loadMovies(),
+      loadAnimes(),
     ]);
   }
 
@@ -37,9 +37,9 @@ class MovieViewModel {
     // TODO: 添加配置加载逻辑
   }
 
-  /// 加载电影类型列表
+  /// 加载动漫类型列表
   Future<void> setupGenres() async {
-    movieGenres = [
+    animeGenres = [
       'Action',
       'Adventure',
       'Crime',
@@ -62,115 +62,115 @@ class MovieViewModel {
     ];
   }
 
-  /// 加载所有电影数据
-  Future<void> loadMovies() async {
-    allMovies = [
-      Movie(
-        movieId: 1,
+  /// 加载所有动漫数据
+  Future<void> loadAnimes() async {
+    allAnimes = [
+      Anime(
+        animeId: 1,
         image: 'http://image.tmdb.org/t/p/w780/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 2,
+      Anime(
+        animeId: 2,
         image: 'http://image.tmdb.org/t/p/w780/gKkl37BQuKTanygYQG1pyYgLVgf.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 3,
+      Anime(
+        animeId: 3,
         image: 'http://image.tmdb.org/t/p/w780/4xJd3uwtL1vCuZgEfEc8JXI9Uyx.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 4,
+      Anime(
+        animeId: 4,
         image: 'http://image.tmdb.org/t/p/w780/uuA01PTtPombRPvL9dvsBqOBJWm.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 5,
+      Anime(
+        animeId: 5,
         image: 'http://image.tmdb.org/t/p/w780/H6vke7zGiuLsz4v4RPeReb9rsv.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 6,
+      Anime(
+        animeId: 6,
         image: 'http://image.tmdb.org/t/p/w780/e1J2oNzSBdou01sUvriVuoYp0pJ.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 7,
+      Anime(
+        animeId: 7,
         image: 'http://image.tmdb.org/t/p/w780/hu40Uxp9WtpL34jv3zyWLb5zEVY.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 8,
+      Anime(
+        animeId: 8,
         image: 'http://image.tmdb.org/t/p/w780/pKaA8VvfkNfEMUPMiiuL5qSPQYy.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 9,
+      Anime(
+        animeId: 9,
         image: 'http://image.tmdb.org/t/p/w780/zK2sFxZcelHJRPVr242rxy5VK4T.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 10,
+      Anime(
+        animeId: 10,
         image: 'http://image.tmdb.org/t/p/w780/7qxG0zyt29BI0IzFDfsps62kbQi.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 11,
+      Anime(
+        animeId: 11,
         image: 'http://image.tmdb.org/t/p/w780/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 12,
+      Anime(
+        animeId: 12,
         image: 'http://image.tmdb.org/t/p/w780/zDi2U7WYkdIoGYHcYbM9X5yReVD.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 13,
+      Anime(
+        animeId: 13,
         image: 'http://image.tmdb.org/t/p/w780/cxevDYdeFkiixRShbObdwAHBZry.jpg',
         title: 'Title',
         overview: 'Overview',
         popularity: 1.0,
         releaseDate: DateTime.now(),
       ),
-      Movie(
-        movieId: 14,
+      Anime(
+        animeId: 14,
         image: 'http://image.tmdb.org/t/p/w780/uXUs1fwSuE06LgYETw2mi4JxQvc.jpg',
         title: 'Title',
         overview: 'Overview',
@@ -180,82 +180,82 @@ class MovieViewModel {
     ];
   }
 
-  /// 根据电影 ID 查找电影
-  Movie findMovieById(int movieId) {
-    return allMovies.firstWhere(
-      (movie) => movie.movieId == movieId,
-      orElse: () => allMovies.first,
+  /// 根据动漫 ID 查找动漫
+  Anime findAnimeById(int animeId) {
+    return allAnimes.firstWhere(
+      (anime) => anime.animeId == animeId,
+      orElse: () => allAnimes.first,
     );
   }
 
-  /// 获取正在流行的电影列表
-  Future<List<Movie>> getTrendingMovies(int page) async {
-    if (trendingMovies.isEmpty) {
-      trendingMovies = [
-        allMovies[0],
-        allMovies[2],
-        allMovies[4],
-        allMovies[6],
-        allMovies[8],
-        allMovies[10],
-        allMovies[12],
+  /// 获取正在流行的动漫列表
+  Future<List<Anime>> getTrendingAnimes(int page) async {
+    if (trendingAnimes.isEmpty) {
+      trendingAnimes = [
+        allAnimes[0],
+        allAnimes[2],
+        allAnimes[4],
+        allAnimes[6],
+        allAnimes[8],
+        allAnimes[10],
+        allAnimes[12],
       ];
     }
-    return trendingMovies;
+    return trendingAnimes;
   }
 
-  /// 获取最受欢迎的电影列表
-  Future<List<Movie>> getPopular(int page) async {
-    if (popularMovies.isEmpty) {
-      popularMovies = [
-        allMovies[1],
-        allMovies[3],
-        allMovies[5],
-        allMovies[7],
-        allMovies[9],
-        allMovies[11],
-        allMovies[13],
+  /// 获取最受欢迎的动漫列表
+  Future<List<Anime>> getPopular(int page) async {
+    if (popularAnimes.isEmpty) {
+      popularAnimes = [
+        allAnimes[1],
+        allAnimes[3],
+        allAnimes[5],
+        allAnimes[7],
+        allAnimes[9],
+        allAnimes[11],
+        allAnimes[13],
       ];
     }
-    return popularMovies;
+    return popularAnimes;
   }
 
-  /// 获取评分最高的电影列表
-  Future<List<Movie>> getTopRated(int page) async {
-    if (topRatedMovies.isEmpty) {
-      topRatedMovies = [
-        allMovies[0],
-        allMovies[4],
-        allMovies[8],
-        allMovies[12],
+  /// 获取评分最高的动漫列表
+  Future<List<Anime>> getTopRated(int page) async {
+    if (topRatedAnimes.isEmpty) {
+      topRatedAnimes = [
+        allAnimes[0],
+        allAnimes[4],
+        allAnimes[8],
+        allAnimes[12],
       ];
     }
-    return topRatedMovies;
+    return topRatedAnimes;
   }
 
-  /// 获取正在上映的电影列表
-  Future<List<Movie>> getNowPlaying(int page) async {
-    if (nowPlayingMovies.isEmpty) {
-      nowPlayingMovies = [
-        allMovies[8],
-        allMovies[10],
-        allMovies[12],
-        allMovies[0],
-        allMovies[2],
-        allMovies[4],
-        allMovies[6],
+  /// 获取正在上映的动漫列表
+  Future<List<Anime>> getNowPlaying(int page) async {
+    if (nowPlayingAnimes.isEmpty) {
+      nowPlayingAnimes = [
+        allAnimes[8],
+        allAnimes[10],
+        allAnimes[12],
+        allAnimes[0],
+        allAnimes[2],
+        allAnimes[4],
+        allAnimes[6],
       ];
     }
-    return nowPlayingMovies;
+    return nowPlayingAnimes;
   }
 
-  /// 创建收藏电影流
+  /// 创建收藏动漫流
   /// 首次调用时初始化收藏列表，后续直接返回流
   Stream<List<Favorite>> streamFavorites() {
     if (favoriteList == null) {
       favoriteList = [
         Favorite(
-          movieId: 1,
+          animeId: 1,
           image: 'http://image.tmdb.org/t/p/w780/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg',
           favorite: false,
           title: 'Title',
@@ -264,7 +264,7 @@ class MovieViewModel {
           releaseDate: DateTime.now(),
         ),
         Favorite(
-          movieId: 2,
+          animeId: 2,
           image: 'http://image.tmdb.org/t/p/w780/gKkl37BQuKTanygYQG1pyYgLVgf.jpg',
           favorite: false,
           title: 'Title',
@@ -273,7 +273,7 @@ class MovieViewModel {
           releaseDate: DateTime.now(),
         ),
         Favorite(
-          movieId: 3,
+          animeId: 3,
           image: 'http://image.tmdb.org/t/p/w780/4xJd3uwtL1vCuZgEfEc8JXI9Uyx.jpg',
           favorite: false,
           title: 'Title',
@@ -282,7 +282,7 @@ class MovieViewModel {
           releaseDate: DateTime.now(),
         ),
         Favorite(
-          movieId: 4,
+          animeId: 4,
           image: 'http://image.tmdb.org/t/p/w780/uuA01PTtPombRPvL9dvsBqOBJWm.jpg',
           favorite: false,
           title: 'Title',
@@ -291,7 +291,7 @@ class MovieViewModel {
           releaseDate: DateTime.now(),
         ),
         Favorite(
-          movieId: 5,
+          animeId: 5,
           image: 'http://image.tmdb.org/t/p/w780/H6vke7zGiuLsz4v4RPeReb9rsv.jpg',
           favorite: false,
           title: 'Title',
@@ -305,10 +305,10 @@ class MovieViewModel {
     return favoriteStream!;
   }
 
-  /// 更新收藏电影状态
+  /// 更新收藏动漫状态
   void updateFavorite(Favorite favorite) {
     final index = favoriteList!
-        .indexWhere((favItem) => favItem.movieId == favorite.movieId);
+        .indexWhere((favItem) => favItem.animeId == favorite.animeId);
     if (index != -1) {
       favoriteList![index] = favorite;
     }

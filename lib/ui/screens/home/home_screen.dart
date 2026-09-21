@@ -1,19 +1,19 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:movies/data/models/movie.dart';
+import 'package:movies/data/models/anime.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
-import 'package:movies/ui/movie_viewmodel.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/ui/screens/home/home_screen_image.dart';
 import 'package:movies/ui/screens/home/title_row.dart';
-import 'package:movies/ui/screens/home/horiz_movies.dart';
+import 'package:movies/ui/screens/home/horiz_animes.dart';
 import 'package:movies/ui/theme/theme.dart';
-import 'package:movies/ui/widgets/movie_widget.dart';
+import 'package:movies/ui/widgets/anime_widget.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
 
 /// 主页
-/// 展示轮播图和不同分类的电影列表
+/// 展示轮播图和不同分类的动漫列表
 @RoutePage(name: 'HomeRoute')
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -23,18 +23,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  late MovieViewModel movieViewModel;
-  Future<List<List<Movie>>>? movieFuture;
+  late AnimeViewModel animeViewModel;
+  Future<List<List<Anime>>>? animeFuture;
 
   @override
   Widget build(BuildContext context) {
     // 监听异步提供者状态
-    final movieViewModelAsync = ref.watch(movieViewModelProvider);
-    return movieViewModelAsync.when(
+    final animeViewModelAsync = ref.watch(animeViewModelProvider);
+    return animeViewModelAsync.when(
       error: (e, st) => Text(e.toString()),
       loading: () => const NotReady(),
       data: (viewModel) {
-        movieViewModel = viewModel;
+        animeViewModel = viewModel;
         return buildScreen();
       },
     );
@@ -65,26 +65,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   HomeScreenImage(
-                    movieViewModel: movieViewModel,
-                    onMovieTap: onMovieTap,
+                    animeViewModel: animeViewModel,
+                    onAnimeTap: onAnimeTap,
                   ),
                   TitleRow(text: 'trending ', onMoreClicked: () {}),
-                  HorizontalMovies(
-                    movies: movieViewModel.trendingMovies,
-                    onMovieTap: onMovieTap,
-                    movieType: MovieType.trending,
+                  HorizontalAnimes(
+                    animes: animeViewModel.trendingAnimes,
+                    onAnimeTap: onAnimeTap,
+                    animeType: AnimeType.trending,
                   ),
                   TitleRow(text: 'popular ', onMoreClicked: () {}),
-                  HorizontalMovies(
-                    movies: movieViewModel.popularMovies,
-                    onMovieTap: onMovieTap,
-                    movieType: MovieType.popular,
+                  HorizontalAnimes(
+                    animes: animeViewModel.popularAnimes,
+                    onAnimeTap: onAnimeTap,
+                    animeType: AnimeType.popular,
                   ),
                   TitleRow(text: 'top-rated ', onMoreClicked: () {}),
-                  HorizontalMovies(
-                    movies: movieViewModel.topRatedMovies,
-                    onMovieTap: onMovieTap,
-                    movieType: MovieType.topRated,
+                  HorizontalAnimes(
+                    animes: animeViewModel.topRatedAnimes,
+                    onAnimeTap: onAnimeTap,
+                    animeType: AnimeType.topRated,
                   ),
                 ],
               ),
@@ -95,20 +95,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// 加载电影数据
-  /// 使用 Future.wait 等待所有分类电影加载完成
-  Future<List<List<Movie>>> loadData() async {
-    movieFuture ??= Future.wait([
-      movieViewModel.getTrendingMovies(1),
-      movieViewModel.getTopRated(1),
-      movieViewModel.getPopular(1),
-      movieViewModel.getNowPlaying(1),
+  /// 加载动漫数据
+  /// 使用 Future.wait 等待所有分类动漫加载完成
+  Future<List<List<Anime>>> loadData() async {
+    animeFuture ??= Future.wait([
+      animeViewModel.getTrendingAnimes(1),
+      animeViewModel.getTopRated(1),
+      animeViewModel.getPopular(1),
+      animeViewModel.getNowPlaying(1),
     ]);
-    return movieFuture!;
+    return animeFuture!;
   }
 
-  /// 电影点击回调，跳转到电影详情页
-  void onMovieTap(int movieId) {
-    context.router.push(MovieDetailRoute(movieId: movieId));
+  /// 动漫点击回调，跳转到动漫详情页
+  void onAnimeTap(int animeId) {
+    context.router.push(AnimeDetailRoute(animeId: animeId));
   }
 }

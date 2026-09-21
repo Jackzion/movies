@@ -15,6 +15,16 @@ abstract class _$AppRouter extends RootStackRouter {
 
   @override
   final Map<String, PageFactory> pagesMap = {
+    AnimeDetailRoute.name: (routeData) {
+      final args = routeData.argsAs<AnimeDetailRouteArgs>();
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: AnimeDetail(
+          args.animeId,
+          key: args.key,
+        ),
+      );
+    },
     FavoriteRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -39,27 +49,55 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const MainScreen(),
       );
     },
-    MovieDetailRoute.name: (routeData) {
-      final args = routeData.argsAs<MovieDetailRouteArgs>();
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: MovieDetail(
-          args.movieId,
-          key: args.key,
-        ),
-      );
-    },
     VideoPageRoute.name: (routeData) {
       final args = routeData.argsAs<VideoPageRouteArgs>();
       return AutoRoutePage<dynamic>(
         routeData: routeData,
         child: VideoPage(
-          args.movieVideo,
+          args.animeVideo,
           key: args.key,
         ),
       );
     },
   };
+}
+
+/// generated route for
+/// [AnimeDetail]
+class AnimeDetailRoute extends PageRouteInfo<AnimeDetailRouteArgs> {
+  AnimeDetailRoute({
+    required int animeId,
+    Key? key,
+    List<PageRouteInfo>? children,
+  }) : super(
+          AnimeDetailRoute.name,
+          args: AnimeDetailRouteArgs(
+            animeId: animeId,
+            key: key,
+          ),
+          initialChildren: children,
+        );
+
+  static const String name = 'AnimeDetailRoute';
+
+  static const PageInfo<AnimeDetailRouteArgs> page =
+      PageInfo<AnimeDetailRouteArgs>(name);
+}
+
+class AnimeDetailRouteArgs {
+  const AnimeDetailRouteArgs({
+    required this.animeId,
+    this.key,
+  });
+
+  final int animeId;
+
+  final Key? key;
+
+  @override
+  String toString() {
+    return 'AnimeDetailRouteArgs{animeId: $animeId, key: $key}';
+  }
 }
 
 /// generated route for
@@ -119,54 +157,16 @@ class MainRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [MovieDetail]
-class MovieDetailRoute extends PageRouteInfo<MovieDetailRouteArgs> {
-  MovieDetailRoute({
-    required int movieId,
-    Key? key,
-    List<PageRouteInfo>? children,
-  }) : super(
-          MovieDetailRoute.name,
-          args: MovieDetailRouteArgs(
-            movieId: movieId,
-            key: key,
-          ),
-          initialChildren: children,
-        );
-
-  static const String name = 'MovieDetailRoute';
-
-  static const PageInfo<MovieDetailRouteArgs> page =
-      PageInfo<MovieDetailRouteArgs>(name);
-}
-
-class MovieDetailRouteArgs {
-  const MovieDetailRouteArgs({
-    required this.movieId,
-    this.key,
-  });
-
-  final int movieId;
-
-  final Key? key;
-
-  @override
-  String toString() {
-    return 'MovieDetailRouteArgs{movieId: $movieId, key: $key}';
-  }
-}
-
-/// generated route for
 /// [VideoPage]
 class VideoPageRoute extends PageRouteInfo<VideoPageRouteArgs> {
   VideoPageRoute({
-    required String movieVideo,
+    required String animeVideo,
     Key? key,
     List<PageRouteInfo>? children,
   }) : super(
           VideoPageRoute.name,
           args: VideoPageRouteArgs(
-            movieVideo: movieVideo,
+            animeVideo: animeVideo,
             key: key,
           ),
           initialChildren: children,
@@ -180,16 +180,16 @@ class VideoPageRoute extends PageRouteInfo<VideoPageRouteArgs> {
 
 class VideoPageRouteArgs {
   const VideoPageRouteArgs({
-    required this.movieVideo,
+    required this.animeVideo,
     this.key,
   });
 
-  final String movieVideo;
+  final String animeVideo;
 
   final Key? key;
 
   @override
   String toString() {
-    return 'VideoPageRouteArgs{movieVideo: $movieVideo, key: $key}';
+    return 'VideoPageRouteArgs{animeVideo: $animeVideo, key: $key}';
   }
 }

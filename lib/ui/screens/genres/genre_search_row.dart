@@ -12,19 +12,19 @@ class GenreSearchRow extends ConsumerStatefulWidget {
 }
 
 class _GenreSearchRowState extends ConsumerState<GenreSearchRow> {
-  late TextEditingController movieTextController;
+  late TextEditingController animeTextController;
   late FocusNode textFocusNode;
 
   @override
   void initState() {
     super.initState();
-    movieTextController = TextEditingController(text: '');
+    animeTextController = TextEditingController(text: '');
     textFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
-    movieTextController.dispose();
+    animeTextController.dispose();
     textFocusNode.dispose();
     super.dispose();
   }
@@ -46,7 +46,7 @@ class _GenreSearchRowState extends ConsumerState<GenreSearchRow> {
               onSubmitted: (value) {
                 widget.onSearch(value);
               },
-              controller: movieTextController,
+              controller: animeTextController,
               autocorrect: false,
               decoration: InputDecoration(
                 filled: true,
@@ -58,11 +58,11 @@ class _GenreSearchRowState extends ConsumerState<GenreSearchRow> {
                   borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide.none,
                 ),
-                hintText: 'movie name, genre',
+                hintText: 'anime name, genre',
                 hintStyle: body1Regular.copyWith(color: posterBorder),
                 suffixIcon: IconButton(
                   onPressed: () {
-                    movieTextController.clear();
+                    animeTextController.clear();
                   },
                   icon: const Icon(
                     Icons.close,
@@ -72,7 +72,7 @@ class _GenreSearchRowState extends ConsumerState<GenreSearchRow> {
                 prefixIcon: IconButton(
                   icon: const Icon(Icons.search, color: Colors.white),
                   onPressed: () {
-                    widget.onSearch(movieTextController.text);
+                    widget.onSearch(animeTextController.text);
                   },
                 ),
               ),

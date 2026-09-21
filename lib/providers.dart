@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/router/app_routes.dart';
-import 'package:movies/ui/movie_viewmodel.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'providers.g.dart';
 
@@ -8,11 +8,11 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 AppRouter appRouter(AppRouterRef ref) => AppRouter();
 
-/// 电影视图模型提供者
-/// 异步加载，等待 setup 完成后返回 MovieViewModel
+/// 动漫视图模型提供者
+/// 异步加载，等待 setup 完成后返回 AnimeViewModel
 @Riverpod(keepAlive: true)
-Future<MovieViewModel> movieViewModel(MovieViewModelRef ref) async {
-  final model = MovieViewModel();
+Future<AnimeViewModel> animeViewModel(AnimeViewModelRef ref) async {
+  final model = AnimeViewModel();
   await model.setup();
   return model;
 }

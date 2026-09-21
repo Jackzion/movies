@@ -10,8 +10,8 @@ import 'package:media_kit_video/media_kit_video.dart';
 @RoutePage(name: 'VideoPageRoute')
 class VideoPage extends ConsumerStatefulWidget {
   /// 视频 ID 或播放地址
-  final String movieVideo;
-  const VideoPage(this.movieVideo, {super.key});
+  final String animeVideo;
+  const VideoPage(this.animeVideo, {super.key});
   @override
   ConsumerState<VideoPage> createState() => _VideoPageState();
 }

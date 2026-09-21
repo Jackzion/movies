@@ -1,57 +1,57 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:movies/data/models/movie.dart';
+import 'package:movies/data/models/anime.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
-import 'package:movies/ui/movie_viewmodel.dart';
-import 'package:movies/ui/screens/movie_detail/button_row.dart';
-import 'package:movies/ui/screens/movie_detail/detail_image.dart';
-import 'package:movies/ui/screens/movie_detail/genre_row.dart';
-import 'package:movies/ui/screens/movie_detail/movie_overview.dart';
-import 'package:movies/ui/screens/movie_detail/trailer.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
+import 'package:movies/ui/screens/anime_detail/button_row.dart';
+import 'package:movies/ui/screens/anime_detail/detail_image.dart';
+import 'package:movies/ui/screens/anime_detail/genre_row.dart';
+import 'package:movies/ui/screens/anime_detail/anime_overview.dart';
+import 'package:movies/ui/screens/anime_detail/trailer.dart';
 import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/ui/widgets/horiz_cast.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
 
-/// 电影详情页面
-/// 展示电影的封面图、类型、简介、收藏按钮和预告片列表
-@RoutePage(name: 'MovieDetailRoute')
-class MovieDetail extends ConsumerStatefulWidget {
-  /// 电影 ID，用于从电影列表中获取对应电影数据
-  final int movieId;
-  const MovieDetail(this.movieId, {super.key});
+/// 动漫详情页面
+/// 展示动漫的封面图、类型、简介、收藏按钮和预告片列表
+@RoutePage(name: 'AnimeDetailRoute')
+class AnimeDetail extends ConsumerStatefulWidget {
+  /// 动漫 ID，用于从动漫列表中获取对应动漫数据
+  final int animeId;
+  const AnimeDetail(this.animeId, {super.key});
 
   @override
-  ConsumerState<MovieDetail> createState() => _MovieDetailState();
+  ConsumerState<AnimeDetail> createState() => _AnimeDetailState();
 }
 
-class _MovieDetailState extends ConsumerState<MovieDetail> {
-  late MovieViewModel movieViewModel;
+class _AnimeDetailState extends ConsumerState<AnimeDetail> {
+  late AnimeViewModel animeViewModel;
   List<GenreState> genreStates = [];
-  late Movie currentMovie;
+  late Anime currentAnime;
 
   @override
   Widget build(BuildContext context) {
     // 监听异步提供者状态
-    final movieViewModelAsync = ref.watch(movieViewModelProvider);
-    return movieViewModelAsync.when(
+    final animeViewModelAsync = ref.watch(animeViewModelProvider);
+    return animeViewModelAsync.when(
       error: (e, st) => Text(e.toString()),
       loading: () => const NotReady(),
       data: (viewModel) {
-        movieViewModel = viewModel;
-        currentMovie = movieViewModel.findMovieById(widget.movieId);
+        animeViewModel = viewModel;
+        currentAnime = animeViewModel.findAnimeById(widget.animeId);
         buildGenreState();
         return buildScreen();
       },
     );
   }
 
-  /// 构建电影类型状态列表
+  /// 构建动漫类型状态列表
   void buildGenreState() {
     genreStates.clear();
-    for (final genre in movieViewModel.movieGenres) {
+    for (final genre in animeViewModel.animeGenres) {
       genreStates.add(GenreState(genre: genre, isSelected: false));
     }
   }
@@ -85,10 +85,10 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
                   slivers: [
                     SliverList(
                       delegate: SliverChildListDelegate([
-                        Stack(children: [DetailImage(movieUrl: currentMovie.image)]),
+                        Stack(children: [DetailImage(animeUrl: currentAnime.image)]),
                         GenreRow(genres: genreStates),
-                        MovieOverview(
-                          details: currentMovie.overview,
+                        AnimeOverview(
+                          details: currentAnime.overview,
                         ),
                         ValueListenableBuilder<bool>(
                           valueListenable: favoriteNotifier,
@@ -117,11 +117,11 @@ class _MovieDetailState extends ConsumerState<MovieDetail> {
                           ),
                         ),
                         Trailer(
-                          movieVideos: const ['U2Qp5pL3ovA'],
+                          animeVideos: const ['U2Qp5pL3ovA'],
                           onVideoTap: (video) {
                             debugPrint('Trailer tapped: $video');
                             context.router.push(
-                              VideoPageRoute(movieVideo: 'U2Qp5pL3ovA'),
+                              VideoPageRoute(animeVideo: 'U2Qp5pL3ovA'),
                             );
                           },
                         ),

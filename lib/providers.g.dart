@@ -22,23 +22,23 @@ final appRouterProvider = Provider<AppRouter>.internal(
 );
 
 typedef AppRouterRef = ProviderRef<AppRouter>;
-String _$movieViewModelHash() => r'16cbfdde58b8cc036eaf559b55ae65c7ecc8f88c';
+String _$animeViewModelHash() => r'dd8a950f5241b83cb740d1cba16d6f0ac0a34021';
 
-/// 电影视图模型提供者
-/// 异步加载，等待 setup 完成后返回 MovieViewModel
+/// 动漫视图模型提供者
+/// 异步加载，等待 setup 完成后返回 AnimeViewModel
 ///
-/// Copied from [movieViewModel].
-@ProviderFor(movieViewModel)
-final movieViewModelProvider = FutureProvider<MovieViewModel>.internal(
-  movieViewModel,
-  name: r'movieViewModelProvider',
+/// Copied from [animeViewModel].
+@ProviderFor(animeViewModel)
+final animeViewModelProvider = FutureProvider<AnimeViewModel>.internal(
+  animeViewModel,
+  name: r'animeViewModelProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$movieViewModelHash,
+      : _$animeViewModelHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef MovieViewModelRef = FutureProviderRef<MovieViewModel>;
+typedef AnimeViewModelRef = FutureProviderRef<AnimeViewModel>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

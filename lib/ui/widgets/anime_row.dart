@@ -2,35 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:movies/data/models/movie.dart';
+import 'package:movies/data/models/anime.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/utils/utils.dart';
 
-/// 电影行展示组件
-/// 支持 Hero 动画过渡效果，点击后跳转到电影详情页
-class MovieRow extends ConsumerWidget {
-  /// 电影数据对象
-  final Movie movie;
+/// 动漫行展示组件
+/// 支持 Hero 动画过渡效果，点击后跳转到动漫详情页
+class AnimeRow extends ConsumerWidget {
+  /// 动漫数据对象
+  final Anime anime;
   /// 点击回调函数
-  final OnMovieTap onMovieTap;
+  final OnAnimeTap onAnimeTap;
 
-  const MovieRow({
-    required this.movie,
-    required this.onMovieTap,
+  const AnimeRow({
+    required this.anime,
+    required this.onAnimeTap,
     super.key,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 唯一的 Hero 动画标签，由电影地址和 'MovieRow' 组合生成
-    String uniqueHeroTag = movie.image + 'MovieRow';
+    // 唯一的 Hero 动画标签，由动漫地址和 'AnimeRow' 组合生成
+    String uniqueHeroTag = anime.image + 'AnimeRow';
 
-    if (movie.image.isNotEmpty) {
+    if (anime.image.isNotEmpty) {
       return GestureDetector(
         onTap: () {
           // 设置当前的 Hero 标签，用于详情页动画
           ref.read(heroTagProvider.notifier).state = uniqueHeroTag;
-          onMovieTap(movie.movieId);
+          onAnimeTap(anime.animeId);
         },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -46,7 +46,7 @@ class MovieRow extends ConsumerWidget {
                   child: Hero(
                     tag: uniqueHeroTag,
                     child: CachedNetworkImage(
-                      imageUrl: movie.image,
+                      imageUrl: anime.image,
                       alignment: Alignment.topCenter,
                       fit: BoxFit.cover,
                       height: 142,
@@ -62,14 +62,14 @@ class MovieRow extends ConsumerWidget {
                   children: [
                     const Spacer(),
                     Text(
-                      movie.title,
+                      anime.title,
                       maxLines: 1,
                       style: Theme.of(context).textTheme.labelLarge,
                       overflow: TextOverflow.ellipsis,
                     ),
                     addVerticalSpace(4),
                     Text(
-                      movie.releaseDate.year.toString(),
+                      anime.releaseDate.year.toString(),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     addVerticalSpace(4),
