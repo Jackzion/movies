@@ -1,5 +1,7 @@
+import 'package:colorize_lumberdash/colorize_lumberdash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumberdash/lumberdash.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/ui/theme/theme.dart';
@@ -9,6 +11,10 @@ void main() {
   // 必须显式初始化,否则视频播放会直接报 "Error while playing video"
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+
+  // 初始化 lumberdash 日志库
+  putLumberdashToWork(withClients: [ColorizeLumberdash()]);
+
   runApp(const ProviderScope(child: MainApp()));
 }
 

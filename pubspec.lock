@@ -233,6 +233,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.19.1"
+  colorize_lumberdash:
+    dependency: "direct main"
+    description:
+      name: colorize_lumberdash
+      sha256: "6069ad908445caab046e93738c4f941536b6266076f2998b4ac6c012355eb1ba"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.0"
   convert:
     dependency: transitive
     description:
@@ -568,6 +576,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.3.0"
+  lumberdash:
+    dependency: "direct main"
+    description:
+      name: lumberdash
+      sha256: "1bc3750c094adb7f213a61883ca9878ba052fde52d9974b9039598c651fe096c"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.0"
   matcher:
     dependency: transitive
     description:

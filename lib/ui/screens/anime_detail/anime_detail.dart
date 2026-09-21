@@ -30,7 +30,7 @@ class AnimeDetail extends ConsumerStatefulWidget {
 class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   late AnimeViewModel animeViewModel;
   List<GenreState> genreStates = [];
-  late Anime currentAnime;
+  Anime? currentAnime;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +57,11 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   }
 
   Widget buildScreen() {
+    if (currentAnime == null) {
+      return const NotReady();
+    }
+
+    final anime = currentAnime!;
     final favoriteNotifier = ValueNotifier<bool>(false);
 
     return SafeArea(
@@ -85,10 +90,10 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                   slivers: [
                     SliverList(
                       delegate: SliverChildListDelegate([
-                        Stack(children: [DetailImage(animeUrl: currentAnime.image)]),
+                        Stack(children: [DetailImage(animeUrl: anime.image)]),
                         GenreRow(genres: genreStates),
                         AnimeOverview(
-                          details: currentAnime.synopsis ?? '',
+                          details: anime.synopsis ?? '',
                         ),
                         ValueListenableBuilder<bool>(
                           valueListenable: favoriteNotifier,
