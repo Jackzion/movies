@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:movies/data/models/anime_details.dart';
 
+/// 动漫简介组件
+/// 展示动漫的详细描述信息
 class AnimeOverview extends StatelessWidget {
-  final String details;
+  /// 动漫详情数据
+  final AnimeDetails details;
   const AnimeOverview({super.key, required this.details});
 
   @override
@@ -9,7 +13,7 @@ class AnimeOverview extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       child: Text(
-        details,
+        details.synopsis ?? '',
         style: Theme.of(context).textTheme.bodyMedium,
       ),
     );

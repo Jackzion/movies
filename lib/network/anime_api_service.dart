@@ -155,4 +155,10 @@ class AnimeAPIService {
       },
     );
   }
+
+  /// 获取动漫详情（返回原始 Response）
+  Future<Response> getAnimeDetails(int id) async {
+    await _rateLimit();
+    return dio.get('$animeUrl/$id');
+  }
 }

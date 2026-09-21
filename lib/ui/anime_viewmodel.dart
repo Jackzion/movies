@@ -1,5 +1,6 @@
 import 'package:lumberdash/lumberdash.dart';
 import 'package:movies/data/models/anime.dart';
+import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_response.dart';
 import 'package:movies/data/models/favorite.dart';
 import 'package:movies/network/anime_api_service.dart';
@@ -161,6 +162,27 @@ class AnimeViewModel {
         .indexWhere((favItem) => favItem.animeId == favorite.animeId);
     if (index != -1) {
       favoriteList![index] = favorite;
+    }
+  }
+
+  /// 获取动漫详情
+  Future<AnimeDetails?> getAnimeDetails(int animeId) async {
+    try {
+      final response = await animeAPIService.getAnimeDetails(animeId);
+      if (response.statusCode == 200) {
+        try {
+          return AnimeDetails.fromJson(response.data['data']);
+        } catch (e) {
+          logError('Failed to parse anime details: $e');
+          return null;
+        }
+      } else {
+        logError('Failed to load anime details: ${response.statusCode} - ${response.statusMessage}');
+        return null;
+      }
+    } catch (e) {
+      logError('Error loading anime details: $e');
+      return null;
     }
   }
 }

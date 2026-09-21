@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:movies/ui/screens/genres/genre_section.dart';
+import 'package:movies/data/models/genre.dart';
 import 'package:movies/ui/theme/theme.dart';
 
-/// 电影类型标签行组件
-/// 展示电影的类型标签，支持从右向左滑入动画
+/// 动漫类型标签行组件
+/// 展示动漫的类型标签，支持从右向左滑入动画
 class GenreRow extends StatefulWidget {
-  /// 电影类型列表
-  final List<GenreState> genres;
+  /// 类型列表
+  final List<Genre> genres;
   const GenreRow({super.key, required this.genres});
 
   @override
@@ -72,7 +72,7 @@ class _GenreRowState extends State<GenreRow> with SingleTickerProviderStateMixin
                   ),
                   child: Center(
                     child: Text(
-                      genre.genre,
+                      genre.name,
                       style: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),

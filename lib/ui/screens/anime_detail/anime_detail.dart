@@ -1,7 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:movies/data/models/anime.dart';
+import 'package:lumberdash/lumberdash.dart';
+import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
@@ -10,7 +11,6 @@ import 'package:movies/ui/screens/anime_detail/detail_image.dart';
 import 'package:movies/ui/screens/anime_detail/genre_row.dart';
 import 'package:movies/ui/screens/anime_detail/anime_overview.dart';
 import 'package:movies/ui/screens/anime_detail/trailer.dart';
-import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/ui/widgets/horiz_cast.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
@@ -29,8 +29,6 @@ class AnimeDetail extends ConsumerStatefulWidget {
 
 class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   late AnimeViewModel animeViewModel;
-  List<GenreState> genreStates = [];
-  Anime? currentAnime;
 
   @override
   Widget build(BuildContext context) {
@@ -41,27 +39,32 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
       loading: () => const NotReady(),
       data: (viewModel) {
         animeViewModel = viewModel;
-        currentAnime = animeViewModel.findAnimeById(widget.animeId);
-        buildGenreState();
         return buildScreen();
       },
     );
   }
 
-  /// 构建动漫类型状态列表
-  void buildGenreState() {
-    genreStates.clear();
-    for (final genre in animeViewModel.animeGenres) {
-      genreStates.add(GenreState(genre: genre, isSelected: false));
-    }
+  Widget buildScreen() {
+    return FutureBuilder(
+      future: loadData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const NotReady();
+        }
+        if (snapshot.hasError) {
+          logMessage('Error: ${snapshot.error.toString()}');
+          return Text(snapshot.error.toString());
+        }
+        final animeDetails = snapshot.data as AnimeDetails?;
+        if (animeDetails == null) {
+          return const NotReady();
+        }
+        return buildDetailScreen(animeDetails);
+      },
+    );
   }
 
-  Widget buildScreen() {
-    if (currentAnime == null) {
-      return const NotReady();
-    }
-
-    final anime = currentAnime!;
+  Widget buildDetailScreen(AnimeDetails animeDetails) {
     final favoriteNotifier = ValueNotifier<bool>(false);
 
     return SafeArea(
@@ -90,11 +93,9 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                   slivers: [
                     SliverList(
                       delegate: SliverChildListDelegate([
-                        Stack(children: [DetailImage(animeUrl: anime.image)]),
-                        GenreRow(genres: genreStates),
-                        AnimeOverview(
-                          details: anime.synopsis ?? '',
-                        ),
+                        Stack(children: [DetailImage(details: animeDetails)]),
+                        GenreRow(genres: animeDetails.genres ?? []),
+                        AnimeOverview(details: animeDetails),
                         ValueListenableBuilder<bool>(
                           valueListenable: favoriteNotifier,
                           builder: (
@@ -141,5 +142,9 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
         ),
       ),
     );
+  }
+
+  Future<AnimeDetails?> loadData() async {
+    return animeViewModel.getAnimeDetails(widget.animeId);
   }
 }
