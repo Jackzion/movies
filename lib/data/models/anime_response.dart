@@ -1,42 +1,56 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:movies/data/models/anime.dart';
 
-part 'anime_response.freezed.dart';
 part 'anime_response.g.dart';
 
 /// Jikan API 响应数据模型
-/// 包含分页信息和动漫列表
-@freezed
-class AnimeResponse with _$AnimeResponse {
-  const factory AnimeResponse({
-    /// 当前页码
-    required int pagination,
+@JsonSerializable()
+class AnimeResponse {
+  /// 分页信息
+  final Pagination pagination;
 
-    /// 动漫列表数据
-    required List<Anime> data,
+  /// 动漫列表数据
+  final List<Anime> data;
 
-    /// 是否有下一页
-    @JsonKey(name: 'has_next_page') bool? hasNextPage,
-  }) = _AnimeResponse;
+  /// 是否有下一页
+  @JsonKey(name: 'has_next_page')
+  final bool? hasNextPage;
+
+  const AnimeResponse({
+    required this.pagination,
+    required this.data,
+    this.hasNextPage,
+  });
 
   factory AnimeResponse.fromJson(Map<String, dynamic> json) =>
       _$AnimeResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AnimeResponseToJson(this);
 }
 
 /// Jikan API 分页信息响应模型
-@freezed
-class Pagination with _$Pagination {
-  const factory Pagination({
-    /// 当前页码
-    @JsonKey(name: 'last_visible_page') int? lastVisiblePage,
+@JsonSerializable()
+class Pagination {
+  /// 最后一页页码
+  @JsonKey(name: 'last_visible_page')
+  final int? lastVisiblePage;
 
-    /// 是否有下一页
-    @JsonKey(name: 'has_next_page') bool? hasNextPage,
+  /// 是否有下一页
+  @JsonKey(name: 'has_next_page')
+  final bool? hasNextPage;
 
-    /// 当前页
-    @JsonKey(name: 'current_page') int? currentPage,
-  }) = _Pagination;
+  /// 当前页
+  @JsonKey(name: 'current_page')
+  final int? currentPage;
+
+  const Pagination({
+    this.lastVisiblePage,
+    this.hasNextPage,
+    this.currentPage,
+  });
 
   factory Pagination.fromJson(Map<String, dynamic> json) =>
       _$PaginationFromJson(json);
+
+  Map<String, dynamic> toJson() => _$PaginationToJson(this);
 }

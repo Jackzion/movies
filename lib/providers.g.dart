@@ -6,39 +6,147 @@ part of 'providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appRouterHash() => r'42599edccdcfb58d05fc5c5c1776f848db2a5b20';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// 路由提供者
+
+@ProviderFor(appRouter)
+final appRouterProvider = AppRouterProvider._();
 
 /// 路由提供者
-///
-/// Copied from [appRouter].
-@ProviderFor(appRouter)
-final appRouterProvider = Provider<AppRouter>.internal(
-  appRouter,
-  name: r'appRouterProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$appRouterHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef AppRouterRef = ProviderRef<AppRouter>;
-String _$animeViewModelHash() => r'dd8a950f5241b83cb740d1cba16d6f0ac0a34021';
+final class AppRouterProvider
+    extends $FunctionalProvider<AppRouter, AppRouter, AppRouter>
+    with $Provider<AppRouter> {
+  /// 路由提供者
+  AppRouterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appRouterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appRouterHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppRouter> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppRouter create(Ref ref) {
+    return appRouter(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppRouter value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppRouter>(value),
+    );
+  }
+}
+
+String _$appRouterHash() => r'42599edccdcfb58d05fc5c5c1776f848db2a5b20';
+
+/// 动漫 API 服务提供者
+/// 提供 AnimeAPIService 实例
+
+@ProviderFor(animeAPIService)
+final animeAPIServiceProvider = AnimeAPIServiceProvider._();
+
+/// 动漫 API 服务提供者
+/// 提供 AnimeAPIService 实例
+
+final class AnimeAPIServiceProvider
+    extends
+        $FunctionalProvider<AnimeAPIService, AnimeAPIService, AnimeAPIService>
+    with $Provider<AnimeAPIService> {
+  /// 动漫 API 服务提供者
+  /// 提供 AnimeAPIService 实例
+  AnimeAPIServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'animeAPIServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$animeAPIServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<AnimeAPIService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AnimeAPIService create(Ref ref) {
+    return animeAPIService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AnimeAPIService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AnimeAPIService>(value),
+    );
+  }
+}
+
+String _$animeAPIServiceHash() => r'44e84767d70c2ce03782f9998cdd9570dc1fda07';
 
 /// 动漫视图模型提供者
 /// 异步加载，等待 setup 完成后返回 AnimeViewModel
-///
-/// Copied from [animeViewModel].
-@ProviderFor(animeViewModel)
-final animeViewModelProvider = FutureProvider<AnimeViewModel>.internal(
-  animeViewModel,
-  name: r'animeViewModelProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$animeViewModelHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef AnimeViewModelRef = FutureProviderRef<AnimeViewModel>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+@ProviderFor(animeViewModel)
+final animeViewModelProvider = AnimeViewModelProvider._();
+
+/// 动漫视图模型提供者
+/// 异步加载，等待 setup 完成后返回 AnimeViewModel
+
+final class AnimeViewModelProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<AnimeViewModel>,
+          AnimeViewModel,
+          FutureOr<AnimeViewModel>
+        >
+    with $FutureModifier<AnimeViewModel>, $FutureProvider<AnimeViewModel> {
+  /// 动漫视图模型提供者
+  /// 异步加载，等待 setup 完成后返回 AnimeViewModel
+  AnimeViewModelProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'animeViewModelProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$animeViewModelHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<AnimeViewModel> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AnimeViewModel> create(Ref ref) {
+    return animeViewModel(ref);
+  }
+}
+
+String _$animeViewModelHash() => r'0d4eac659c6df3b7dc1cd5d90fd8f9bfa478a441';

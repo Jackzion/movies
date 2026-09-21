@@ -1,11 +1,9 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-part 'anime.freezed.dart';
 part 'anime.g.dart';
 
 /// 解析日期字符串为 DateTime
-/// Jikan API 返回的日期格式为 yyyy-MM-dd
 DateTime? _parseDate(String? dateString) {
   if (dateString == null || dateString.isEmpty) {
     return null;
@@ -18,112 +16,126 @@ DateTime? _parseDate(String? dateString) {
 }
 
 /// 动漫数据模型
-/// 使用 freezed 生成不可变类和 JSON 序列化代码
-@freezed
-class Anime with _$Anime {
-  const factory Anime({
-    /// 动漫 ID
-    required int malId,
+@JsonSerializable()
+class Anime {
+  @JsonKey(name: 'mal_id')
+  final int malId;
 
-    /// 动漫标题
-    String? title,
+  final String? title;
 
-    /// 英文标题
-    @JsonKey(name: 'title_english') String? titleEnglish,
+  @JsonKey(name: 'title_english')
+  final String? titleEnglish;
 
-    /// 图片 URL
-    Images? images,
+  final Images? images;
 
-    /// 是否正在播出
-    @JsonKey(name: 'airing') bool? airing,
+  final bool? airing;
 
-    /// 评分
-    double? score,
+  final double? score;
 
-    /// 评分人数
-    @JsonKey(name: 'scored_by') int? scoredBy,
+  @JsonKey(name: 'scored_by')
+  final int? scoredBy;
 
-    /// 排名
-    int? rank,
+  final int? rank;
 
-    /// 成员数
-    int? members,
+  final int? members;
 
-    /// 类型 (TV, Movie, OVA, etc.)
-    String? type,
+  final String? type;
 
-    /// 状态 (Finished Airing, Currently Airing, Not yet aired)
-    String? status,
+  final String? status;
 
-    /// 播放集数
-    @JsonKey(name: 'episodes') int? episodes,
+  final int? episodes;
 
-    /// 开始日期
-    @JsonKey(name: 'aired', fromJson: _parseDate) DateTime? aired,
+  @JsonKey(fromJson: _parseDate)
+  final DateTime? aired;
 
-    /// 简介
-    String? synopsis,
+  final String? synopsis;
 
-    /// 背景
-    String? background,
+  final String? background;
 
-    /// 季节
-    String? season,
+  final String? season;
 
-    /// 年份
-    int? year,
+  final int? year;
 
-    /// 评分等级
-    @JsonKey(name: 'rating') String? rating,
-  }) = _Anime;
+  @JsonKey(name: 'rating')
+  final String? ratingClass;
+
+  const Anime({
+    required this.malId,
+    this.title,
+    this.titleEnglish,
+    this.images,
+    this.airing,
+    this.score,
+    this.scoredBy,
+    this.rank,
+    this.members,
+    this.type,
+    this.status,
+    this.episodes,
+    this.aired,
+    this.synopsis,
+    this.background,
+    this.season,
+    this.year,
+    this.ratingClass,
+  });
 
   factory Anime.fromJson(Map<String, dynamic> json) => _$AnimeFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AnimeToJson(this);
+
+  /// 获取封面图片 URL
+  String get imageUrl =>
+      images?.jpg?.largeImageUrl ?? images?.jpg?.imageUrl ?? '';
 }
 
 /// 图片数据模型
-@freezed
-class Images with _$Images {
-  const factory Images({
-    /// JPG 格式图片
-    Jpg? jpg,
+@JsonSerializable()
+class Images {
+  final Jpg? jpg;
+  final WebP? webp;
 
-    /// WebP 格式图片
-    WebP? webp,
-  }) = _Images;
+  const Images({this.jpg, this.webp});
 
   factory Images.fromJson(Map<String, dynamic> json) => _$ImagesFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ImagesToJson(this);
 }
 
 /// JPG 格式图片数据模型
-@freezed
-class Jpg with _$Jpg {
-  const factory Jpg({
-    /// 图片 URL
-    String? image_url,
+@JsonSerializable()
+class Jpg {
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
 
-    /// 小尺寸图片 URL
-    String? small_image_url,
+  @JsonKey(name: 'small_image_url')
+  final String? smallImageUrl;
 
-    /// 大尺寸图片 URL
-    String? large_image_url,
-  }) = _Jpg;
+  @JsonKey(name: 'large_image_url')
+  final String? largeImageUrl;
+
+  const Jpg({this.imageUrl, this.smallImageUrl, this.largeImageUrl});
 
   factory Jpg.fromJson(Map<String, dynamic> json) => _$JpgFromJson(json);
+
+  Map<String, dynamic> toJson() => _$JpgToJson(this);
 }
 
 /// WebP 格式图片数据模型
-@freezed
-class WebP with _$WebP {
-  const factory WebP({
-    /// 图片 URL
-    String? image_url,
+@JsonSerializable()
+class WebP {
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
 
-    /// 小尺寸图片 URL
-    String? small_image_url,
+  @JsonKey(name: 'small_image_url')
+  final String? smallImageUrl;
 
-    /// 大尺寸图片 URL
-    String? large_image_url,
-  }) = _WebP;
+  @JsonKey(name: 'large_image_url')
+  final String? largeImageUrl;
+
+  const WebP({this.imageUrl, this.smallImageUrl, this.largeImageUrl});
 
   factory WebP.fromJson(Map<String, dynamic> json) => _$WebPFromJson(json);
+
+  Map<String, dynamic> toJson() => _$WebPToJson(this);
 }

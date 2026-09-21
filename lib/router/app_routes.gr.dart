@@ -1,3 +1,4 @@
+// dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 // **************************************************************************
@@ -9,59 +10,6 @@
 
 part of 'app_routes.dart';
 
-abstract class _$AppRouter extends RootStackRouter {
-  // ignore: unused_element
-  _$AppRouter({super.navigatorKey});
-
-  @override
-  final Map<String, PageFactory> pagesMap = {
-    AnimeDetailRoute.name: (routeData) {
-      final args = routeData.argsAs<AnimeDetailRouteArgs>();
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: AnimeDetail(
-          args.animeId,
-          key: args.key,
-        ),
-      );
-    },
-    FavoriteRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const FavoriteScreen(),
-      );
-    },
-    GenreRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const GenreScreen(),
-      );
-    },
-    HomeRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const HomeScreen(),
-      );
-    },
-    MainRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const MainScreen(),
-      );
-    },
-    VideoPageRoute.name: (routeData) {
-      final args = routeData.argsAs<VideoPageRouteArgs>();
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: VideoPage(
-          args.animeVideo,
-          key: args.key,
-        ),
-      );
-    },
-  };
-}
-
 /// generated route for
 /// [AnimeDetail]
 class AnimeDetailRoute extends PageRouteInfo<AnimeDetailRouteArgs> {
@@ -70,25 +18,24 @@ class AnimeDetailRoute extends PageRouteInfo<AnimeDetailRouteArgs> {
     Key? key,
     List<PageRouteInfo>? children,
   }) : super(
-          AnimeDetailRoute.name,
-          args: AnimeDetailRouteArgs(
-            animeId: animeId,
-            key: key,
-          ),
-          initialChildren: children,
-        );
+         AnimeDetailRoute.name,
+         args: AnimeDetailRouteArgs(animeId: animeId, key: key),
+         initialChildren: children,
+       );
 
   static const String name = 'AnimeDetailRoute';
 
-  static const PageInfo<AnimeDetailRouteArgs> page =
-      PageInfo<AnimeDetailRouteArgs>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<AnimeDetailRouteArgs>();
+      return AnimeDetail(args.animeId, key: args.key);
+    },
+  );
 }
 
 class AnimeDetailRouteArgs {
-  const AnimeDetailRouteArgs({
-    required this.animeId,
-    this.key,
-  });
+  const AnimeDetailRouteArgs({required this.animeId, this.key});
 
   final int animeId;
 
@@ -98,62 +45,80 @@ class AnimeDetailRouteArgs {
   String toString() {
     return 'AnimeDetailRouteArgs{animeId: $animeId, key: $key}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! AnimeDetailRouteArgs) return false;
+    return animeId == other.animeId && key == other.key;
+  }
+
+  @override
+  int get hashCode => animeId.hashCode ^ key.hashCode;
 }
 
 /// generated route for
 /// [FavoriteScreen]
 class FavoriteRoute extends PageRouteInfo<void> {
   const FavoriteRoute({List<PageRouteInfo>? children})
-      : super(
-          FavoriteRoute.name,
-          initialChildren: children,
-        );
+    : super(FavoriteRoute.name, initialChildren: children);
 
   static const String name = 'FavoriteRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const FavoriteScreen();
+    },
+  );
 }
 
 /// generated route for
 /// [GenreScreen]
 class GenreRoute extends PageRouteInfo<void> {
   const GenreRoute({List<PageRouteInfo>? children})
-      : super(
-          GenreRoute.name,
-          initialChildren: children,
-        );
+    : super(GenreRoute.name, initialChildren: children);
 
   static const String name = 'GenreRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const GenreScreen();
+    },
+  );
 }
 
 /// generated route for
 /// [HomeScreen]
 class HomeRoute extends PageRouteInfo<void> {
   const HomeRoute({List<PageRouteInfo>? children})
-      : super(
-          HomeRoute.name,
-          initialChildren: children,
-        );
+    : super(HomeRoute.name, initialChildren: children);
 
   static const String name = 'HomeRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const HomeScreen();
+    },
+  );
 }
 
 /// generated route for
 /// [MainScreen]
 class MainRoute extends PageRouteInfo<void> {
   const MainRoute({List<PageRouteInfo>? children})
-      : super(
-          MainRoute.name,
-          initialChildren: children,
-        );
+    : super(MainRoute.name, initialChildren: children);
 
   static const String name = 'MainRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const MainScreen();
+    },
+  );
 }
 
 /// generated route for
@@ -164,25 +129,24 @@ class VideoPageRoute extends PageRouteInfo<VideoPageRouteArgs> {
     Key? key,
     List<PageRouteInfo>? children,
   }) : super(
-          VideoPageRoute.name,
-          args: VideoPageRouteArgs(
-            animeVideo: animeVideo,
-            key: key,
-          ),
-          initialChildren: children,
-        );
+         VideoPageRoute.name,
+         args: VideoPageRouteArgs(animeVideo: animeVideo, key: key),
+         initialChildren: children,
+       );
 
   static const String name = 'VideoPageRoute';
 
-  static const PageInfo<VideoPageRouteArgs> page =
-      PageInfo<VideoPageRouteArgs>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<VideoPageRouteArgs>();
+      return VideoPage(args.animeVideo, key: args.key);
+    },
+  );
 }
 
 class VideoPageRouteArgs {
-  const VideoPageRouteArgs({
-    required this.animeVideo,
-    this.key,
-  });
+  const VideoPageRouteArgs({required this.animeVideo, this.key});
 
   final String animeVideo;
 
@@ -192,4 +156,14 @@ class VideoPageRouteArgs {
   String toString() {
     return 'VideoPageRouteArgs{animeVideo: $animeVideo, key: $key}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! VideoPageRouteArgs) return false;
+    return animeVideo == other.animeVideo && key == other.key;
+  }
+
+  @override
+  int get hashCode => animeVideo.hashCode ^ key.hashCode;
 }
