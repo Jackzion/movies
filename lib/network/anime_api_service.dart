@@ -74,8 +74,22 @@ class AnimeAPIService {
     }
   }
 
+  /// 上次请求时间，用于速率限制
+  DateTime _lastRequestTime = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// 确保请求间隔至少 1 秒（Jikan API 限制每秒 3 次）
+  Future<void> _rateLimit() async {
+    final now = DateTime.now();
+    final elapsed = now.difference(_lastRequestTime);
+    if (elapsed < Duration(milliseconds: 1000)) {
+      await Future.delayed(Duration(milliseconds: 1000 - elapsed.inMilliseconds));
+    }
+    _lastRequestTime = DateTime.now();
+  }
+
   /// 获取热门动漫列表（返回原始 Response）
   Future<Response> getTopAnime({int page = 1, int limit = 10}) async {
+    await _rateLimit();
     return dio.get(
       topAnimeUrl,
       queryParameters: {
@@ -87,6 +101,7 @@ class AnimeAPIService {
 
   /// 搜索动漫（返回原始 Response）
   Future<Response> searchAnime(String query, {int page = 1, int limit = 10}) async {
+    await _rateLimit();
     return dio.get(
       searchAnimeUrl,
       queryParameters: {
@@ -99,11 +114,13 @@ class AnimeAPIService {
 
   /// 获取动漫详情（返回原始 Response）
   Future<Response> getAnimeDetail(int id) async {
+    await _rateLimit();
     return dio.get('$animeUrl/$id');
   }
 
   /// 获取当前正在播出的动漫（返回原始 Response）
   Future<Response> getCurrentlyAiring({int page = 1, int limit = 10}) async {
+    await _rateLimit();
     return dio.get(
       topAnimeUrl,
       queryParameters: {
@@ -116,6 +133,7 @@ class AnimeAPIService {
 
   /// 获取即将播出的动漫（返回原始 Response）
   Future<Response> getUpcoming({int page = 1, int limit = 10}) async {
+    await _rateLimit();
     return dio.get(
       topAnimeUrl,
       queryParameters: {
@@ -128,6 +146,7 @@ class AnimeAPIService {
 
   /// 获取本季动漫（返回原始 Response）
   Future<Response> getSeasonNow({int page = 1, int limit = 10}) async {
+    await _rateLimit();
     return dio.get(
       'seasons/now',
       queryParameters: {
