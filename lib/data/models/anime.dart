@@ -4,15 +4,33 @@ import 'package:json_annotation/json_annotation.dart';
 part 'anime.g.dart';
 
 /// 解析日期字符串为 DateTime
-DateTime? _parseDate(String? dateString) {
-  if (dateString == null || dateString.isEmpty) {
-    return null;
+DateTime? _parseDate(dynamic value) {
+  if (value == null) return null;
+  if (value is String) {
+    try {
+      return DateFormat('yyyy-MM-dd').parse(value);
+    } catch (e) {
+      return null;
+    }
   }
-  try {
-    return DateFormat('yyyy-MM-dd').parse(dateString);
-  } catch (e) {
-    return null;
+  return null;
+}
+
+/// 解析 aired 字段（Jikan API 返回的是 Map 对象）
+DateTime? _parseAired(dynamic value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) {
+    final from = value['from'] as String?;
+    if (from != null && from.isNotEmpty) {
+      try {
+        // 格式: "2023-10-05T00:00:00+00:00"
+        return DateTime.parse(from);
+      } catch (e) {
+        return null;
+      }
+    }
   }
+  return null;
 }
 
 /// 动漫数据模型
@@ -45,7 +63,7 @@ class Anime {
 
   final int? episodes;
 
-  @JsonKey(fromJson: _parseDate)
+  @JsonKey(fromJson: _parseAired)
   final DateTime? aired;
 
   final String? synopsis;

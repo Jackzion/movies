@@ -21,7 +21,7 @@ Anime _$AnimeFromJson(Map<String, dynamic> json) => Anime(
   type: json['type'] as String?,
   status: json['status'] as String?,
   episodes: (json['episodes'] as num?)?.toInt(),
-  aired: _parseDate(json['aired'] as String?),
+  aired: _parseAired(json['aired']),
   synopsis: json['synopsis'] as String?,
   background: json['background'] as String?,
   season: json['season'] as String?,
