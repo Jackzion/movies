@@ -87,6 +87,10 @@ class Anime {
   /// 获取封面图片 URL
   String get imageUrl =>
       images?.jpg?.largeImageUrl ?? images?.jpg?.imageUrl ?? '';
+
+  /// 兼容旧代码的字段名
+  int get animeId => malId;
+  String get image => imageUrl;
 }
 
 /// 图片数据模型
