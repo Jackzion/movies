@@ -24,7 +24,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late AnimeViewModel animeViewModel;
-  Future<List<List<Anime>>>? animeFuture;
+  Future<List<List<Anime?>?>>? animeFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   /// 加载动漫数据
   /// 使用 Future.wait 等待所有分类动漫加载完成
-  Future<List<List<Anime>>> loadData() async {
+  Future<List<List<Anime?>?>> loadData() async {
     animeFuture ??= Future.wait([
       animeViewModel.getTrendingAnimes(1),
       animeViewModel.getTopRated(1),
