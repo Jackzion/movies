@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:auto_size_text/auto_size_text.dart';
+
 import 'package:movies/data/models/anime.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/utils/utils.dart';
@@ -62,14 +62,14 @@ class AnimeRow extends ConsumerWidget {
                   children: [
                     const Spacer(),
                     Text(
-                      anime.title,
+                      anime.title ?? '',
                       maxLines: 1,
                       style: Theme.of(context).textTheme.labelLarge,
                       overflow: TextOverflow.ellipsis,
                     ),
                     addVerticalSpace(4),
                     Text(
-                      anime.releaseDate.year.toString(),
+                      anime.aired?.year.toString() ?? '',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     addVerticalSpace(4),

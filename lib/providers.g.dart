@@ -52,7 +52,7 @@ final class AppRouterProvider
   }
 }
 
-String _$appRouterHash() => r'42599edccdcfb58d05fc5c5c1776f848db2a5b20';
+String _$appRouterHash() => r'fc1228daa214cc1ad475cfdeafc6db36a6a237b5';
 
 /// 动漫 API 服务提供者
 /// 提供 AnimeAPIService 实例
@@ -102,7 +102,7 @@ final class AnimeAPIServiceProvider
   }
 }
 
-String _$animeAPIServiceHash() => r'44e84767d70c2ce03782f9998cdd9570dc1fda07';
+String _$animeAPIServiceHash() => r'a48d1092bec3dfb9ea9a2f42f5b0d6c4c53e349f';
 
 /// 动漫视图模型提供者
 /// 异步加载，等待 setup 完成后返回 AnimeViewModel
@@ -149,4 +149,4 @@ final class AnimeViewModelProvider
   }
 }
 
-String _$animeViewModelHash() => r'0d4eac659c6df3b7dc1cd5d90fd8f9bfa478a441';
+String _$animeViewModelHash() => r'2dfe81fb83245799be87617a08a816708a72694d';

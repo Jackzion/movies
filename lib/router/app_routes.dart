@@ -10,7 +10,7 @@ import 'package:movies/ui/screens/videos/video_page.dart';
 part 'app_routes.gr.dart';
 
 @AutoRouterConfig()
-class AppRouter extends _$AppRouter {
+class AppRouter extends RootStackRouter {
   @override
   List<AutoRoute> get routes => [
     AutoRoute(
@@ -28,7 +28,7 @@ class AppRouter extends _$AppRouter {
       page: AnimeDetailRoute.page,
       maintainState: false,
       transitionsBuilder: TransitionsBuilders.slideBottom,
-      durationInMilliseconds: 500,
+      duration: const Duration(milliseconds: 500),
     ),
     // 视频播放页面路由
     CustomRoute(
@@ -36,7 +36,7 @@ class AppRouter extends _$AppRouter {
       page: VideoPageRoute.page,
       maintainState: false,
       transitionsBuilder: TransitionsBuilders.slideLeftWithFade,
-      durationInMilliseconds: 500,
+      duration: const Duration(milliseconds: 500),
     ),
   ];
 }

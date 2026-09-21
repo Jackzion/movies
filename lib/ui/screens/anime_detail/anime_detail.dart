@@ -66,7 +66,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
           leading: BackButton(
             color: Colors.white,
             onPressed: () {
-              ref.read(appRouterProvider).maybePopTop();
+              ref.read(appRouterProvider).maybePop();
             },
           ),
           centerTitle: false,
@@ -88,7 +88,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                         Stack(children: [DetailImage(animeUrl: currentAnime.image)]),
                         GenreRow(genres: genreStates),
                         AnimeOverview(
-                          details: currentAnime.overview,
+                          details: currentAnime.synopsis ?? '',
                         ),
                         ValueListenableBuilder<bool>(
                           valueListenable: favoriteNotifier,

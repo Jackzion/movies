@@ -43,7 +43,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
   void initState() {
     super.initState();
     // 根据动漫地址和类型生成唯一的 Hero 标签
-    uniqueHeroTag = widget.anime.image + widget.animeType.name;
+    uniqueHeroTag = widget.anime.imageUrl + widget.animeType.name;
   }
 
   @override
