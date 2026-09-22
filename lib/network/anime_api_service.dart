@@ -34,8 +34,8 @@ class AnimeAPIService {
   void configureDio() {
     final options = BaseOptions(
       baseUrl: jikanApiUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 15),
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -87,29 +87,47 @@ class AnimeAPIService {
     _lastRequestTime = DateTime.now();
   }
 
+  /// 带重试的请求方法
+  Future<Response> _requestWithRetry(Future<Response> Function() request, {int maxRetries = 2}) async {
+    for (int i = 0; i <= maxRetries; i++) {
+      try {
+        return await request();
+      } on DioException catch (e) {
+        if (i == maxRetries) rethrow;
+        // 429 或超时则等待后重试
+        if (e.response?.statusCode == 429 || e.type == DioExceptionType.receiveTimeout) {
+          await Future.delayed(Duration(seconds: (i + 1) * 2));
+          continue;
+        }
+        rethrow;
+      }
+    }
+    throw Exception('Unreachable');
+  }
+
   /// 获取热门动漫列表（返回原始 Response）
   Future<Response> getTopAnime({int page = 1, int limit = 10}) async {
     await _rateLimit();
-    return dio.get(
+    return _requestWithRetry(() => dio.get(
       topAnimeUrl,
       queryParameters: {
         pageParameterName: page,
         limitParameterName: limit,
       },
-    );
+    ));
   }
 
   /// 搜索动漫（返回原始 Response）
   Future<Response> searchAnime(String query, {int page = 1, int limit = 10}) async {
     await _rateLimit();
-    return dio.get(
+    return _requestWithRetry(() => dio.get(
       searchAnimeUrl,
       queryParameters: {
         qParameterName: query,
         pageParameterName: page,
         limitParameterName: limit,
       },
-    );
+    ));
   }
 
   /// 获取动漫详情（返回原始 Response）
@@ -121,56 +139,56 @@ class AnimeAPIService {
   /// 获取当前正在播出的动漫（返回原始 Response）
   Future<Response> getCurrentlyAiring({int page = 1, int limit = 10}) async {
     await _rateLimit();
-    return dio.get(
+    return _requestWithRetry(() => dio.get(
       topAnimeUrl,
       queryParameters: {
         pageParameterName: page,
         limitParameterName: limit,
         filterParameterName: 'airing',
       },
-    );
+    ));
   }
 
   /// 获取即将播出的动漫（返回原始 Response）
   Future<Response> getUpcoming({int page = 1, int limit = 10}) async {
     await _rateLimit();
-    return dio.get(
+    return _requestWithRetry(() => dio.get(
       topAnimeUrl,
       queryParameters: {
         pageParameterName: page,
         limitParameterName: limit,
         filterParameterName: 'upcoming',
       },
-    );
+    ));
   }
 
   /// 获取本季动漫（返回原始 Response）
   Future<Response> getSeasonNow({int page = 1, int limit = 10}) async {
     await _rateLimit();
-    return dio.get(
+    return _requestWithRetry(() => dio.get(
       'seasons/now',
       queryParameters: {
         pageParameterName: page,
         limitParameterName: limit,
       },
-    );
+    ));
   }
 
   /// 获取动漫详情（返回原始 Response）
   Future<Response> getAnimeDetails(int id) async {
     await _rateLimit();
-    return dio.get('$animeUrl/$id');
+    return _requestWithRetry(() => dio.get('$animeUrl/$id'));
   }
 
   /// 获取动漫视频列表（预告片/ED/OP）
   Future<Response> getAnimeVideos(int id) async {
     await _rateLimit();
-    return dio.get('$animeUrl/$id/videos');
+    return _requestWithRetry(() => dio.get('$animeUrl/$id/videos'));
   }
 
   /// 获取动漫角色和声优列表
   Future<Response> getAnimeCharacters(int id) async {
     await _rateLimit();
-    return dio.get('$animeUrl/$id/characters');
+    return _requestWithRetry(() => dio.get('$animeUrl/$id/characters'));
   }
 }

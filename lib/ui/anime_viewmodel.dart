@@ -174,8 +174,16 @@ class AnimeViewModel {
       if (response.statusCode == 200) {
         try {
           final data = response.data;
-          final animeData = data is Map<String, dynamic> ? data['data'] : data;
-          return AnimeDetails.fromJson(animeData as Map<String, dynamic>);
+          if (data is! Map<String, dynamic>) {
+            logError('Invalid response type: ${data.runtimeType}');
+            return null;
+          }
+          final animeData = data['data'];
+          if (animeData is! Map<String, dynamic>) {
+            logError('Invalid data type: ${animeData.runtimeType}');
+            return null;
+          }
+          return AnimeDetails.fromJson(animeData);
         } catch (e) {
           logError('Failed to parse anime details: $e');
           return null;
