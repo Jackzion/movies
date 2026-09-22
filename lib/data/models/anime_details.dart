@@ -1,25 +1,19 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:movies/data/models/genre.dart';
-
-part 'anime_details.g.dart';
 
 /// 动漫详情数据模型
 /// Jikan API 返回的完整动漫信息
-@JsonSerializable()
+/// 完全手写 fromJson/toJson，不依赖任何代码生成
 class AnimeDetails {
   /// 动漫 ID
-  @JsonKey(name: 'mal_id')
   final int? malId;
 
   /// 动漫标题
   final String? title;
 
   /// 英文标题
-  @JsonKey(name: 'title_english')
   final String? titleEnglish;
 
   /// 日文标题
-  @JsonKey(name: 'title_japanese')
   final String? titleJapanese;
 
   /// 图片信息
@@ -53,7 +47,6 @@ class AnimeDetails {
   final double? score;
 
   /// 评分人数
-  @JsonKey(name: 'scored_by')
   final int? scoredBy;
 
   /// 排名
@@ -114,7 +107,7 @@ class AnimeDetails {
     this.studios,
   });
 
-  /// 安全的 fromJson 方法，处理所有 null 值
+  /// 从 JSON 创建 AnimeDetails 实例
   factory AnimeDetails.fromJson(Map<String, dynamic> json) {
     return AnimeDetails(
       malId: _parseInt(json['mal_id']),
@@ -165,7 +158,36 @@ class AnimeDetails {
     return null;
   }
 
-  Map<String, dynamic> toJson() => _$AnimeDetailsToJson(this);
+  /// 转换为 JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'mal_id': malId,
+      'title': title,
+      'title_english': titleEnglish,
+      'title_japanese': titleJapanese,
+      'images': images,
+      'type': type,
+      'source': source,
+      'episodes': episodes,
+      'status': status,
+      'airing': airing,
+      'aired': aired,
+      'duration': duration,
+      'rating': rating,
+      'score': score,
+      'scored_by': scoredBy,
+      'rank': rank,
+      'popularity': popularity,
+      'members': members,
+      'favorites': favorites,
+      'synopsis': synopsis,
+      'background': background,
+      'season': season,
+      'year': year,
+      'genres': genres?.map((e) => e.toJson()).toList(),
+      'studios': studios,
+    };
+  }
 
   /// 获取封面图片 URL
   String get imageUrl {
