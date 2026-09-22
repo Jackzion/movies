@@ -171,9 +171,19 @@ class AnimeViewModel {
       final response = await animeAPIService.getAnimeDetails(animeId);
       if (response.statusCode == 200) {
         try {
-          return AnimeDetails.fromJson(response.data['data']);
+          // 打印响应数据结构，用于调试
+          final data = response.data;
+          print('API Response type: ${data.runtimeType}');
+          print('API Response keys: ${data is Map ? data.keys.toList() : "not a map"}');
+
+          // Jikan API v4 响应格式: { "data": { ... } }
+          final animeData = data is Map<String, dynamic> ? data['data'] : data;
+          print('AnimeData type: ${animeData.runtimeType}');
+
+          return AnimeDetails.fromJson(animeData as Map<String, dynamic>);
         } catch (e) {
           logError('Failed to parse anime details: $e');
+          print('Parse error details: $e');
           return null;
         }
       } else {
