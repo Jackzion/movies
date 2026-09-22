@@ -5,8 +5,8 @@ import 'package:lumberdash/lumberdash.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/ui/theme/theme.dart';
-
-void main() {
+  
+void main() { 
   // pod_player 在 Windows/Linux/macOS 底层用 media_kit,
   // 必须显式初始化,否则视频播放会直接报 "Error while playing video"
   WidgetsFlutterBinding.ensureInitialized();

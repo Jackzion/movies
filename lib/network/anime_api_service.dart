@@ -161,4 +161,16 @@ class AnimeAPIService {
     await _rateLimit();
     return dio.get('$animeUrl/$id');
   }
+
+  /// 获取动漫视频列表（预告片/ED/OP）
+  Future<Response> getAnimeVideos(int id) async {
+    await _rateLimit();
+    return dio.get('$animeUrl/$id/videos');
+  }
+
+  /// 获取动漫角色和声优列表
+  Future<Response> getAnimeCharacters(int id) async {
+    await _rateLimit();
+    return dio.get('$animeUrl/$id/characters');
+  }
 }

@@ -2,7 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumberdash/lumberdash.dart';
+import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
+import 'package:movies/data/models/anime_video.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
@@ -16,10 +18,10 @@ import 'package:movies/ui/widgets/horiz_cast.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
 
 /// 动漫详情页面
-/// 展示动漫的封面图、类型、简介、收藏按钮和预告片列表
+/// 展示动漫的封面图、类型、简介、收藏按钮、预告片和角色列表
 @RoutePage(name: 'AnimeDetailRoute')
 class AnimeDetail extends ConsumerStatefulWidget {
-  /// 动漫 ID，用于从动漫列表中获取对应动漫数据
+  /// 动漫 ID
   final int animeId;
   const AnimeDetail(this.animeId, {super.key});
 
@@ -29,10 +31,12 @@ class AnimeDetail extends ConsumerStatefulWidget {
 
 class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   late AnimeViewModel animeViewModel;
+  AnimeDetails? animeDetails;
+  List<AnimeVideo> videos = [];
+  List<AnimeCharacter> characters = [];
 
   @override
   Widget build(BuildContext context) {
-    // 监听异步提供者状态
     final animeViewModelAsync = ref.watch(animeViewModelProvider);
     return animeViewModelAsync.when(
       error: (e, st) => Text(e.toString()),
@@ -55,16 +59,16 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
           logMessage('Error: ${snapshot.error.toString()}');
           return Text(snapshot.error.toString());
         }
-        final animeDetails = snapshot.data as AnimeDetails?;
         if (animeDetails == null) {
           return const NotReady();
         }
-        return buildDetailScreen(animeDetails);
+        return buildDetailScreen();
       },
     );
   }
 
-  Widget buildDetailScreen(AnimeDetails animeDetails) {
+  Widget buildDetailScreen() {
+    final details = animeDetails!;
     final favoriteNotifier = ValueNotifier<bool>(false);
 
     return SafeArea(
@@ -93,47 +97,51 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                   slivers: [
                     SliverList(
                       delegate: SliverChildListDelegate([
-                        Stack(children: [DetailImage(details: animeDetails)]),
-                        GenreRow(genres: animeDetails.genres ?? []),
-                        AnimeOverview(details: animeDetails),
+                        Stack(children: [DetailImage(details: details)]),
+                        GenreRow(genres: details.genres ?? []),
+                        AnimeOverview(details: details),
                         ValueListenableBuilder<bool>(
                           valueListenable: favoriteNotifier,
-                          builder: (
-                            BuildContext context,
-                            bool value,
-                            Widget? child,
-                          ) {
+                          builder: (BuildContext context, bool value, Widget? child) {
                             return ButtonRow(
                               favoriteSelected: favoriteNotifier.value,
-                              onFavoriteSelected: () async {
-                                if (favoriteNotifier.value) {
-                                  favoriteNotifier.value = false;
-                                } else {
-                                  favoriteNotifier.value = true;
-                                }
+                              onFavoriteSelected: () {
+                                favoriteNotifier.value = !favoriteNotifier.value;
                               },
                             );
                           },
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16, bottom: 8),
-                          child: Text(
-                            'Trailers',
-                            style: Theme.of(context).textTheme.headlineLarge,
+                        // 预告片区域
+                        if (videos.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16, bottom: 8),
+                            child: Text(
+                              'Trailers',
+                              style: Theme.of(context).textTheme.headlineLarge,
+                            ),
                           ),
-                        ),
-                        Trailer(
-                          animeVideos: const ['U2Qp5pL3ovA'],
-                          onVideoTap: (video) {
-                            debugPrint('Trailer tapped: $video');
-                            context.router.push(
-                              VideoPageRoute(animeVideo: 'U2Qp5pL3ovA'),
-                            );
-                          },
-                        ),
+                          Trailer(
+                            videos: videos,
+                            onVideoTap: (video) {
+                              context.router.push(
+                                VideoPageRoute(animeVideo: video.youtubeId ?? ''),
+                              );
+                            },
+                          ),
+                        ],
+                        // 角色区域
+                        if (characters.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16, bottom: 16, top: 16),
+                            child: Text(
+                              'Characters',
+                              style: Theme.of(context).textTheme.headlineLarge,
+                            ),
+                          ),
+                          HorizontalCast(characters: characters),
+                        ],
                       ]),
                     ),
-                    HorizontalCast(castList: ['', '']),
                   ],
                 ),
               ),
@@ -144,7 +152,14 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
     );
   }
 
-  Future<AnimeDetails?> loadData() async {
-    return animeViewModel.getAnimeDetails(widget.animeId);
+  Future<void> loadData() async {
+    animeDetails = await animeViewModel.getAnimeDetails(widget.animeId);
+    // 并行加载视频和角色数据
+    final results = await Future.wait([
+      animeViewModel.getAnimeVideos(widget.animeId),
+      animeViewModel.getAnimeCharacters(widget.animeId),
+    ]);
+    videos = results[0] as List<AnimeVideo>;
+    characters = results[1] as List<AnimeCharacter>;
   }
 }

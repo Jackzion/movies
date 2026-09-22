@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movies/data/models/anime_video.dart';
 import 'package:movies/data/models/favorite.dart';
 
 Widget addVerticalSpace(double amount) {
@@ -13,7 +14,7 @@ Widget addHorizontalSpace(double amount) {
 typedef OnAnimeTap = void Function(int animeId);
 
 /// 视频点击回调类型
-typedef OnAnimeVideoTap = void Function(String video);
+typedef OnAnimeVideoTap = void Function(AnimeVideo video);
 
 /// 收藏结果点击回调类型
 typedef OnFavoriteResultsTap = void Function(Favorite favorite);

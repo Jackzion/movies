@@ -1,7 +1,9 @@
 import 'package:lumberdash/lumberdash.dart';
 import 'package:movies/data/models/anime.dart';
+import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_response.dart';
+import 'package:movies/data/models/anime_video.dart';
 import 'package:movies/data/models/favorite.dart';
 import 'package:movies/network/anime_api_service.dart';
 
@@ -171,19 +173,11 @@ class AnimeViewModel {
       final response = await animeAPIService.getAnimeDetails(animeId);
       if (response.statusCode == 200) {
         try {
-          // 打印响应数据结构，用于调试
           final data = response.data;
-          print('API Response type: ${data.runtimeType}');
-          print('API Response keys: ${data is Map ? data.keys.toList() : "not a map"}');
-
-          // Jikan API v4 响应格式: { "data": { ... } }
           final animeData = data is Map<String, dynamic> ? data['data'] : data;
-          print('AnimeData type: ${animeData.runtimeType}');
-
           return AnimeDetails.fromJson(animeData as Map<String, dynamic>);
         } catch (e) {
           logError('Failed to parse anime details: $e');
-          print('Parse error details: $e');
           return null;
         }
       } else {
@@ -193,6 +187,63 @@ class AnimeViewModel {
     } catch (e) {
       logError('Error loading anime details: $e');
       return null;
+    }
+  }
+
+  /// 获取动漫视频列表（预告片/ED/OP）
+  Future<List<AnimeVideo>> getAnimeVideos(int animeId) async {
+    try {
+      final response = await animeAPIService.getAnimeVideos(animeId);
+      if (response.statusCode == 200) {
+        try {
+          final data = response.data;
+          final videoData = data is Map<String, dynamic> ? data['data'] : data;
+          if (videoData is Map<String, dynamic>) {
+            final promo = videoData['promo'] as List<dynamic>? ?? [];
+            return promo
+                .map((e) => AnimeVideo.fromJson(e as Map<String, dynamic>))
+                .toList();
+          }
+          return [];
+        } catch (e) {
+          logError('Failed to parse anime videos: $e');
+          return [];
+        }
+      } else {
+        logError('Failed to load anime videos: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      logError('Error loading anime videos: $e');
+      return [];
+    }
+  }
+
+  /// 获取动漫角色和声优列表
+  Future<List<AnimeCharacter>> getAnimeCharacters(int animeId) async {
+    try {
+      final response = await animeAPIService.getAnimeCharacters(animeId);
+      if (response.statusCode == 200) {
+        try {
+          final data = response.data;
+          final characterData = data is Map<String, dynamic> ? data['data'] : data;
+          if (characterData is List<dynamic>) {
+            return characterData
+                .map((e) => AnimeCharacter.fromJson(e as Map<String, dynamic>))
+                .toList();
+          }
+          return [];
+        } catch (e) {
+          logError('Failed to parse anime characters: $e');
+          return [];
+        }
+      } else {
+        logError('Failed to load anime characters: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      logError('Error loading anime characters: $e');
+      return [];
     }
   }
 }
