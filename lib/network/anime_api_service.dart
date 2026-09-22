@@ -34,8 +34,8 @@ class AnimeAPIService {
   void configureDio() {
     final options = BaseOptions(
       baseUrl: jikanApiUrl,
-      connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 3),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 15),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
