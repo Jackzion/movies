@@ -9,7 +9,7 @@ part 'anime_details.g.dart';
 class AnimeDetails {
   /// 动漫 ID
   @JsonKey(name: 'mal_id')
-  final int malId;
+  final int? malId;
 
   /// 动漫标题
   final String? title;
@@ -87,7 +87,7 @@ class AnimeDetails {
   final List<dynamic>? studios;
 
   const AnimeDetails({
-    required this.malId,
+    this.malId,
     this.title,
     this.titleEnglish,
     this.titleJapanese,

@@ -7,7 +7,7 @@ part of 'anime_details.dart';
 // **************************************************************************
 
 AnimeDetails _$AnimeDetailsFromJson(Map<String, dynamic> json) => AnimeDetails(
-  malId: (json['mal_id'] as num).toInt(),
+  malId: (json['mal_id'] as num?)?.toInt(),
   title: json['title'] as String?,
   titleEnglish: json['title_english'] as String?,
   titleJapanese: json['title_japanese'] as String?,
