@@ -114,8 +114,56 @@ class AnimeDetails {
     this.studios,
   });
 
-  factory AnimeDetails.fromJson(Map<String, dynamic> json) =>
-      _$AnimeDetailsFromJson(json);
+  /// 安全的 fromJson 方法，处理所有 null 值
+  factory AnimeDetails.fromJson(Map<String, dynamic> json) {
+    return AnimeDetails(
+      malId: _parseInt(json['mal_id']),
+      title: json['title'] as String?,
+      titleEnglish: json['title_english'] as String?,
+      titleJapanese: json['title_japanese'] as String?,
+      images: json['images'],
+      type: json['type'] as String?,
+      source: json['source'] as String?,
+      episodes: _parseInt(json['episodes']),
+      status: json['status'] as String?,
+      airing: json['airing'] as bool?,
+      aired: json['aired'],
+      duration: json['duration'] as String?,
+      rating: json['rating'] as String?,
+      score: _parseDouble(json['score']),
+      scoredBy: _parseInt(json['scored_by']),
+      rank: _parseInt(json['rank']),
+      popularity: _parseInt(json['popularity']),
+      members: _parseInt(json['members']),
+      favorites: _parseInt(json['favorites']),
+      synopsis: json['synopsis'] as String?,
+      background: json['background'] as String?,
+      season: json['season'] as String?,
+      year: _parseInt(json['year']),
+      genres: (json['genres'] as List<dynamic>?)
+          ?.map((e) => Genre.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      studios: json['studios'] as List<dynamic>?,
+    );
+  }
+
+  /// 安全解析 int
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  /// 安全解析 double
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
 
   Map<String, dynamic> toJson() => _$AnimeDetailsToJson(this);
 
