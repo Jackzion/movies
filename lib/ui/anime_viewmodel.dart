@@ -254,4 +254,38 @@ class AnimeViewModel {
       return [];
     }
   }
+
+  /// 搜索动漫
+  Future<List<Anime>?> searchAnimes(String query, int page) async {
+    try {
+      final response = await animeAPIService.searchAnime(query, page: page);
+      if (response.statusCode == 200) {
+        final animeResponse = AnimeResponse.fromJson(response.data);
+        return animeResponse.data;
+      } else {
+        logError('Failed to search anime: ${response.statusCode} - ${response.statusMessage}');
+        return null;
+      }
+    } catch (e) {
+      logError('Error searching anime: $e');
+      return null;
+    }
+  }
+
+  /// 按类型筛选动漫
+  Future<List<Anime>?> getAnimesByGenre(int genreId, int page) async {
+    try {
+      final response = await animeAPIService.getAnimeByGenre(genreId, page: page);
+      if (response.statusCode == 200) {
+        final animeResponse = AnimeResponse.fromJson(response.data);
+        return animeResponse.data;
+      } else {
+        logError('Failed to load anime by genre: ${response.statusCode} - ${response.statusMessage}');
+        return null;
+      }
+    } catch (e) {
+      logError('Error loading anime by genre: $e');
+      return null;
+    }
+  }
 }

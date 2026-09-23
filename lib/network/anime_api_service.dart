@@ -118,7 +118,7 @@ class AnimeAPIService {
   }
 
   /// 搜索动漫（返回原始 Response）
-  Future<Response> searchAnime(String query, {int page = 1, int limit = 10}) async {
+  Future<Response> _searchAnimeOld(String query, {int page = 1, int limit = 10}) async {
     await _rateLimit();
     return _requestWithRetry(() => dio.get(
       searchAnimeUrl,
@@ -190,5 +190,37 @@ class AnimeAPIService {
   Future<Response> getAnimeCharacters(int id) async {
     await _rateLimit();
     return _requestWithRetry(() => dio.get('$animeUrl/$id/characters'));
+  }
+
+  /// 搜索动漫
+  Future<Response> searchAnime(String query, {int page = 1, int limit = 10}) async {
+    await _rateLimit();
+    return _requestWithRetry(() => dio.get(
+      searchAnimeUrl,
+      queryParameters: {
+        qParameterName: query,
+        pageParameterName: page,
+        limitParameterName: limit,
+      },
+    ));
+  }
+
+  /// 获取动漫类型列表
+  Future<Response> getGenres() async {
+    await _rateLimit();
+    return _requestWithRetry(() => dio.get('genres/anime'));
+  }
+
+  /// 按类型筛选动漫
+  Future<Response> getAnimeByGenre(int genreId, {int page = 1, int limit = 10}) async {
+    await _rateLimit();
+    return _requestWithRetry(() => dio.get(
+      topAnimeUrl,
+      queryParameters: {
+        'genres': genreId,
+        pageParameterName: page,
+        limitParameterName: limit,
+      },
+    ));
   }
 }
