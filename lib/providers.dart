@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:movies/network/anime_api_service.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
+import 'package:movies/utils/prefs.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 part 'providers.g.dart';
 
 /// 路由提供者
@@ -14,6 +16,19 @@ AppRouter appRouter(Ref ref) => AppRouter();
 /// 提供 AnimeAPIService 实例
 @Riverpod(keepAlive: true)
 AnimeAPIService animeAPIService(Ref ref) => AnimeAPIService();
+
+/// SharedPreferences 提供者
+/// 异步加载本地存储实例
+@Riverpod(keepAlive: true)
+Future<SharedPreferences> sharedPrefs(Ref ref) => SharedPreferences.getInstance();
+
+/// Prefs 提供者
+/// 封装 SharedPreferences，提供类型安全的存储方法
+@Riverpod(keepAlive: true)
+Future<Prefs> prefs(Ref ref) async {
+  final sharedPrefs = await ref.read(sharedPrefsProvider.future);
+  return Prefs(sharedPrefs);
+}
 
 /// 动漫视图模型提供者
 /// 异步加载，等待 setup 完成后返回 AnimeViewModel

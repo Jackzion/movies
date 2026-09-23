@@ -12,6 +12,7 @@ import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:movies/ui/widgets/sliver_divider.dart';
 import 'package:movies/ui/widgets/vert_anime_list.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
+import 'package:movies/utils/utils.dart';
 
 /// 类型页面
 /// 展示动漫类型列表和对应类型的动漫

@@ -104,6 +104,96 @@ final class AnimeAPIServiceProvider
 
 String _$animeAPIServiceHash() => r'a48d1092bec3dfb9ea9a2f42f5b0d6c4c53e349f';
 
+/// SharedPreferences 提供者
+/// 异步加载本地存储实例
+
+@ProviderFor(sharedPrefs)
+final sharedPrefsProvider = SharedPrefsProvider._();
+
+/// SharedPreferences 提供者
+/// 异步加载本地存储实例
+
+final class SharedPrefsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SharedPreferences>,
+          SharedPreferences,
+          FutureOr<SharedPreferences>
+        >
+    with
+        $FutureModifier<SharedPreferences>,
+        $FutureProvider<SharedPreferences> {
+  /// SharedPreferences 提供者
+  /// 异步加载本地存储实例
+  SharedPrefsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sharedPrefsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sharedPrefsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<SharedPreferences> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SharedPreferences> create(Ref ref) {
+    return sharedPrefs(ref);
+  }
+}
+
+String _$sharedPrefsHash() => r'eba279b4efb2d4ef41070faedd17991e4ffd9384';
+
+/// Prefs 提供者
+/// 封装 SharedPreferences，提供类型安全的存储方法
+
+@ProviderFor(prefs)
+final prefsProvider = PrefsProvider._();
+
+/// Prefs 提供者
+/// 封装 SharedPreferences，提供类型安全的存储方法
+
+final class PrefsProvider
+    extends $FunctionalProvider<AsyncValue<Prefs>, Prefs, FutureOr<Prefs>>
+    with $FutureModifier<Prefs>, $FutureProvider<Prefs> {
+  /// Prefs 提供者
+  /// 封装 SharedPreferences，提供类型安全的存储方法
+  PrefsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'prefsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$prefsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Prefs> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Prefs> create(Ref ref) {
+    return prefs(ref);
+  }
+}
+
+String _$prefsHash() => r'286d5a6891847e65488b246f20ce8495331773ef';
+
 /// 动漫视图模型提供者
 /// 异步加载，等待 setup 完成后返回 AnimeViewModel
 
