@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:lumberdash/lumberdash.dart';
 
 /// Jikan API 基础地址
 const String jikanApiUrl = 'https://api.jikan.moe/v4/';
@@ -56,7 +57,7 @@ class AnimeAPIService {
         },
         onError: (DioException error, ErrorInterceptorHandler handler) {
           // 处理错误
-          print('API Error: ${error.message}');
+          logError('API Error: ${error.message}');
           return handler.next(error);
         },
       ),

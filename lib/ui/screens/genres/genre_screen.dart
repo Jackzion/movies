@@ -14,6 +14,7 @@ import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:movies/ui/widgets/sliver_divider.dart';
 import 'package:movies/ui/widgets/vert_anime_list.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
+import 'package:movies/utils/utils.dart';
 
 /// 选中类型存储键
 const String genreStringKey = 'GenreKey';
@@ -153,6 +154,14 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
         ),
       ),
     );
+  }
+
+  void search() async {
+    // 先搜索动漫
+    final animeList = await animeViewModel.searchAnimes(currentSearchString,1);
+    setState(() {
+      currentAnimeList = animeList ?? [];
+         }); 
   }
 }
 
