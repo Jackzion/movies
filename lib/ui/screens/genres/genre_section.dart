@@ -1,16 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:movies/data/models/genre.dart';
+import 'package:movies/data/models/genre_state.dart';
 import 'package:movies/ui/theme/theme.dart';
-
-/// 类型选择状态
-class GenreState {
-  /// 类型数据
-  final Genre genre;
-  /// 是否已选中
-  final bool isSelected;
-  GenreState({required this.genre, required this.isSelected});
-}
 
 typedef OnGenresSelected = void Function(List<GenreState>);
 typedef OnGenresExpanded = void Function(bool);
@@ -113,21 +104,19 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
 
   List<Widget> getGenreChips() {
     return List<Widget>.generate(widget.genreStates.length, (index) {
-      final genre = widget.genreStates[index].genre;
-      final isSelected = widget.genreStates[index].isSelected;
+      final genreState = widget.genreStates[index];
       return FilterChip(
         backgroundColor: const Color(0xFF2A2A2A),
         selectedColor: buttonGrey,
         label: Text(
-          genre.name,
+          genreState.genre.name,
           style: Theme.of(context).textTheme.labelSmall,
         ),
-        selected: isSelected,
+        selected: genreState.isSelected,
         onSelected: (selected) {
           setState(() {
-            widget.genreStates[index] = GenreState(
-              genre: genre,
-              isSelected: !isSelected,
+            widget.genreStates[index] = genreState.copyWith(
+              isSelected: !genreState.isSelected,
             );
             widget.onGenresSelected(getSelectedGenres());
           });
