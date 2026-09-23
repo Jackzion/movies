@@ -117,19 +117,6 @@ class AnimeAPIService {
     ));
   }
 
-  /// 搜索动漫（返回原始 Response）
-  Future<Response> _searchAnimeOld(String query, {int page = 1, int limit = 10}) async {
-    await _rateLimit();
-    return _requestWithRetry(() => dio.get(
-      searchAnimeUrl,
-      queryParameters: {
-        qParameterName: query,
-        pageParameterName: page,
-        limitParameterName: limit,
-      },
-    ));
-  }
-
   /// 获取动漫详情（返回原始 Response）
   Future<Response> getAnimeDetail(int id) async {
     await _rateLimit();
