@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/data/models/genre.dart';
 import 'package:movies/ui/theme/theme.dart';
 
+/// 类型选择状态
 class GenreState {
-  final String genre;
+  /// 类型数据
+  final Genre genre;
+  /// 是否已选中
   final bool isSelected;
   GenreState({required this.genre, required this.isSelected});
 }
@@ -35,104 +39,95 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
       delegate: SliverChildListDelegate(
         [
           Material(
-      // 透明背景,避免 MergeableMaterial 的 layout 坑
-      color: Colors.transparent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 头部:整行可点,自带水波纹
-          InkWell(
-            onTap: () => widget.onGenresExpanded(!widget.isExpanded),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: [
-                  Text(
-                    'Genres',
-                    style: Theme.of(context).textTheme.headlineLarge,
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.red,
+            color: Colors.transparent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () => widget.onGenresExpanded(!widget.isExpanded),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Genres',
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 16,
+                          height: 16,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.red,
+                          ),
+                          child: Center(
+                            child: Text(
+                              totalSelected().toString(),
+                              style: verySmallText,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          widget.isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          color: Colors.white,
+                        ),
+                      ],
                     ),
-                    child: Center(
-                      child: Text(
-                        totalSelected().toString(),
-                        style: verySmallText,
-                      ),
-                    ),
                   ),
-                  const Spacer(),
-                  Icon(
-                    widget.isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  child: widget.isExpanded
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.all(0.0),
+                            itemCount: genreChips.length,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 0,
+                              childAspectRatio: 2.2,
+                              mainAxisSpacing: 0,
+                            ),
+                            itemBuilder: (BuildContext context, int index) {
+                              return genreChips[index];
+                            },
+                          ),
+                        )
+                      : const SizedBox(width: double.infinity, height: 0),
+                ),
+              ],
             ),
           ),
-
-          // 折叠/展开区:AnimatedSize 自动算高度,无 ListView / MergeableMaterial
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            child: widget.isExpanded
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      // 1
-                      itemCount: genreChips.length,
-                      // 2
-                      gridDelegate:
-                          // 3
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 100,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: 1.5,
-                            mainAxisSpacing: 0,
-                          ),
-                      // 4
-                      itemBuilder: (BuildContext context, int index) {
-                        return genreChips[index];
-                      },
-                    ),
-                  )
-                : const SizedBox(width: double.infinity, height: 0),
-          ),
         ],
-      ),
-        ),
-      ],
       ),
     );
   }
 
   List<Widget> getGenreChips() {
     return List<Widget>.generate(widget.genreStates.length, (index) {
-      final genreState = widget.genreStates[index];
+      final genre = widget.genreStates[index].genre;
+      final isSelected = widget.genreStates[index].isSelected;
       return FilterChip(
-        // 关键修复:用 #2A2A2A 替代 searchBarBackground(#1E1E1E),
-        // 跟 screenBackground(#111111) 有明显边界,chip 才看得见
         backgroundColor: const Color(0xFF2A2A2A),
         selectedColor: buttonGrey,
         label: Text(
-          genreState.genre,
+          genre.name,
           style: Theme.of(context).textTheme.labelSmall,
         ),
-        selected: genreState.isSelected,
+        selected: isSelected,
         onSelected: (selected) {
           setState(() {
             widget.genreStates[index] = GenreState(
-              genre: genreState.genre,
-              isSelected: !genreState.isSelected,
+              genre: genre,
+              isSelected: !isSelected,
             );
             widget.onGenresSelected(getSelectedGenres());
           });

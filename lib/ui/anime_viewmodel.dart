@@ -5,6 +5,7 @@ import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_response.dart';
 import 'package:movies/data/models/anime_video.dart';
 import 'package:movies/data/models/favorite.dart';
+import 'package:movies/data/models/genre.dart';
 import 'package:movies/network/anime_api_service.dart';
 
 /// 动漫视图模型
@@ -15,7 +16,7 @@ class AnimeViewModel {
   final AnimeAPIService animeAPIService;
 
   /// 动漫类型列表
-  late List<String> animeGenres;
+  List<Genre>? animeGenres;
 
   /// 热门动漫列表
   List<Anime> trendingAnimes = [];
@@ -47,20 +48,42 @@ class AnimeViewModel {
 
   /// 加载动漫类型列表
   Future<void> setupGenres() async {
-    animeGenres = [
-      'Action',
-      'Adventure',
-      'Comedy',
-      'Drama',
-      'Fantasy',
-      'Horror',
-      'Mystery',
-      'Romance',
-      'Sci-Fi',
-      'Slice of Life',
-      'Sports',
-      'Supernatural',
-      'Thriller',
+    try {
+      final response = await animeAPIService.getGenres();
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final genreData = data is Map<String, dynamic> ? data['data'] : data;
+        if (genreData is List<dynamic>) {
+          animeGenres = genreData
+              .map((e) => Genre.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+      } else {
+        // 使用默认类型列表
+        animeGenres = _defaultGenres();
+      }
+    } catch (e) {
+      logError('Failed to load genres: $e');
+      animeGenres = _defaultGenres();
+    }
+  }
+
+  /// 默认类型列表（API 失败时使用）
+  List<Genre> _defaultGenres() {
+    return const [
+      Genre(malId: 1, name: 'Action'),
+      Genre(malId: 2, name: 'Adventure'),
+      Genre(malId: 4, name: 'Comedy'),
+      Genre(malId: 8, name: 'Drama'),
+      Genre(malId: 10, name: 'Fantasy'),
+      Genre(malId: 14, name: 'Horror'),
+      Genre(malId: 7, name: 'Mystery'),
+      Genre(malId: 22, name: 'Romance'),
+      Genre(malId: 24, name: 'Sci-Fi'),
+      Genre(malId: 36, name: 'Slice of Life'),
+      Genre(malId: 30, name: 'Sports'),
+      Genre(malId: 37, name: 'Supernatural'),
+      Genre(malId: 41, name: 'Thriller'),
     ];
   }
 

@@ -11,7 +11,6 @@ import 'package:movies/ui/screens/genres/genre_search_row.dart';
 import 'package:movies/ui/screens/genres/genre_section.dart';
 import 'package:movies/ui/widgets/sliver_divider.dart';
 import 'package:movies/ui/widgets/vert_anime_list.dart';
-import 'package:movies/utils/utils.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
 
 /// 类型页面
@@ -31,7 +30,6 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 监听异步提供者状态
     final animeViewModelAsync = ref.watch(animeViewModelProvider);
     return animeViewModelAsync.when(
       error: (e, st) => Text(e.toString()),
@@ -47,7 +45,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   /// 构建动漫类型状态列表
   void buildGenreState() {
     genreStates.clear();
-    for (final genre in animeViewModel.animeGenres) {
+    for (final genre in animeViewModel.animeGenres!) {
       genreStates.add(GenreState(genre: genre, isSelected: false));
     }
   }
