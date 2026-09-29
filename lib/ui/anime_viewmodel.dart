@@ -181,12 +181,15 @@ class AnimeViewModel {
     return favoriteStream!;
   }
 
-  /// 更新收藏动漫状态
+  /// 更新收藏动漫状态，不存在时新增
   void updateFavorite(Favorite favorite) {
+    favoriteList ??= [];
     final index = favoriteList!
         .indexWhere((favItem) => favItem.animeId == favorite.animeId);
     if (index != -1) {
       favoriteList![index] = favorite;
+    } else {
+      favoriteList!.add(favorite);
     }
   }
 
