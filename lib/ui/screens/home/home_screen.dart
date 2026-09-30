@@ -61,18 +61,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   TitleRow(text: 'trending ', onMoreClicked: () {}),
                   HorizontalAnimes(
                     animes: animeViewModel.trendingAnimes,
+                    animeViewModel: animeViewModel,
                     onAnimeTap: onAnimeTap,
                     animeType: AnimeType.trending,
                   ),
                   TitleRow(text: 'popular ', onMoreClicked: () {}),
                   HorizontalAnimes(
                     animes: animeViewModel.popularAnimes,
+                    animeViewModel: animeViewModel,
                     onAnimeTap: onAnimeTap,
                     animeType: AnimeType.popular,
                   ),
                   TitleRow(text: 'top-rated ', onMoreClicked: () {}),
                   HorizontalAnimes(
                     animes: animeViewModel.topRatedAnimes,
+                    animeViewModel: animeViewModel,
                     onAnimeTap: onAnimeTap,
                     animeType: AnimeType.topRated,
                   ),

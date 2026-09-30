@@ -6,7 +6,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/data/models/anime.dart';
-import 'package:movies/data/models/favorite.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/utils.dart';
@@ -299,7 +298,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
 
   /// 收藏按钮（点击切换收藏状态并更新收藏列表）
   Widget buildFavoriteButton(Anime anime) {
-    final favoriteSelected = isFavorite(anime);
+    final favoriteSelected = widget.animeViewModel.isFavorite(anime);
     return GestureDetector(
       onTap: () => toggleFavorite(anime),
       child: Container(
@@ -456,33 +455,9 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
     );
   }
 
-  /// 判断动漫是否已收藏
-  bool isFavorite(Anime anime) {
-    final favorites = widget.animeViewModel.favoriteList;
-    if (favorites == null) {
-      return false;
-    }
-    return favorites.any((fav) => fav.animeId == anime.animeId && fav.favorite);
-  }
-
-  /// 切换动漫收藏状态
+  /// 切换动漫收藏状态并刷新界面
   void toggleFavorite(Anime anime) {
-    final favorites = widget.animeViewModel.favoriteList ??= [];
-    final index = favorites.indexWhere((fav) => fav.animeId == anime.animeId);
-    if (index != -1) {
-      favorites[index].favorite = !favorites[index].favorite;
-      widget.animeViewModel.updateFavorite(favorites[index]);
-    } else {
-      widget.animeViewModel.updateFavorite(Favorite(
-        animeId: anime.animeId,
-        image: anime.image,
-        favorite: true,
-        title: anime.title ?? '',
-        overview: anime.synopsis ?? '',
-        popularity: anime.score ?? 0,
-        releaseDate: anime.aired ?? DateTime.now(),
-      ));
-    }
+    widget.animeViewModel.toggleFavorite(anime);
     setState(() {});
   }
 }

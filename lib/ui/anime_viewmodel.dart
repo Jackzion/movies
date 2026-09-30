@@ -231,6 +231,35 @@ class AnimeViewModel {
     }
   }
 
+  /// 判断动漫是否已收藏
+  bool isFavorite(Anime anime) {
+    final favorites = favoriteList;
+    if (favorites == null) {
+      return false;
+    }
+    return favorites.any((fav) => fav.animeId == anime.animeId && fav.favorite);
+  }
+
+  /// 切换动漫收藏状态（不存在时新增收藏）
+  void toggleFavorite(Anime anime) {
+    favoriteList ??= [];
+    final index = favoriteList!.indexWhere((fav) => fav.animeId == anime.animeId);
+    if (index != -1) {
+      favoriteList![index].favorite = !favoriteList![index].favorite;
+      updateFavorite(favoriteList![index]);
+    } else {
+      updateFavorite(Favorite(
+        animeId: anime.animeId,
+        image: anime.image,
+        favorite: true,
+        title: anime.title ?? '',
+        overview: anime.synopsis ?? '',
+        popularity: anime.score ?? 0,
+        releaseDate: anime.aired ?? DateTime.now(),
+      ));
+    }
+  }
+
   /// 获取动漫详情
   Future<AnimeDetails?> getAnimeDetails(int animeId) async {
     try {

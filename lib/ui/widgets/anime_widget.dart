@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/data/models/anime.dart';
 import 'package:movies/providers.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/utils.dart';
 
 /// 动漫类型枚举，用于区分不同分类的动漫
@@ -14,12 +15,18 @@ enum AnimeType {
   nowPlaying,
 }
 
+/// 悬停变形动画时长
+const morphDuration = Duration(milliseconds: 250);
+
 /// 动漫卡片展示组件
-/// 竖版海报（2:3）+ 评分角标 + 标题/副标题，悬停时轻微上浮
-/// 支持 Hero 动画过渡效果，点击后跳转到动漫详情页
+/// 默认为竖版海报卡（2:3 封面 + 评分 + 标题/副标题）
+/// 悬停时变形为横幅卡（16:9 bannerImage + 标签 + 操作按钮），并略微放大
 class AnimeWidget extends ConsumerStatefulWidget {
   /// 动漫数据对象
   final Anime anime;
+
+  /// 动漫视图模型（收藏状态与横幅补充数据）
+  final AnimeViewModel animeViewModel;
 
   /// 点击回调函数
   final OnAnimeTap onAnimeTap;
@@ -29,6 +36,7 @@ class AnimeWidget extends ConsumerStatefulWidget {
 
   const AnimeWidget({
     required this.anime,
+    required this.animeViewModel,
     required this.onAnimeTap,
     required this.animeType,
     super.key,
@@ -42,7 +50,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
   /// 唯一的 Hero 动画标签，由动漫地址和类型组合生成
   late String uniqueHeroTag;
 
-  /// 是否处于悬停状态（桌面端上浮效果）
+  /// 是否处于悬停状态（变形为横幅卡）
   bool hovered = false;
 
   @override
@@ -50,6 +58,12 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
     super.initState();
     // 根据动漫地址和类型生成唯一的 Hero 标签
     uniqueHeroTag = widget.anime.imageUrl + widget.animeType.name;
+    // 按需加载宽幅横幅（AniList，带缓存），供悬停态使用
+    widget.animeViewModel.ensureExtras(widget.anime).then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -65,100 +79,304 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
           ref.read(heroTagProvider.notifier).state = uniqueHeroTag;
           widget.onAnimeTap(anime.animeId);
         },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: Matrix4.translationValues(0, hovered ? -4 : 0, 0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: hovered ? const Color(0x80000000) : const Color(0x40000000),
-                blurRadius: hovered ? 24 : 8,
-                offset: Offset(0, hovered ? 12 : 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 海报（2:3）+ 评分角标
-              AspectRatio(
-                aspectRatio: 2 / 3,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Hero(
-                      tag: uniqueHeroTag,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: CachedNetworkImage(
-                          imageUrl: anime.image,
-                          fit: BoxFit.cover,
-                          errorWidget: (context, url, error) =>
-                              buildFallback(context),
-                        ),
-                      ),
+        child: Stack(
+          children: [
+            // 海报卡：始终参与布局（固定卡片尺寸与悬停区域），悬停时淡出
+            AnimatedOpacity(
+              opacity: hovered ? 0 : 1,
+              duration: morphDuration,
+              child: buildPosterCard(context, anime),
+            ),
+            // 横幅卡：悬停时淡入并放大，悬浮于海报卡位置
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: !hovered,
+                child: Center(
+                  child: AnimatedScale(
+                    scale: hovered ? 1.08 : 1.0,
+                    duration: morphDuration,
+                    child: AnimatedOpacity(
+                      opacity: hovered ? 1 : 0,
+                      duration: morphDuration,
+                      child: buildBannerCard(context, anime),
                     ),
-                    if (anime.score != null)
-                      Positioned(
-                        right: 8,
-                        bottom: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xBF000000),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            anime.score!.toStringAsFixed(1),
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-              addVerticalSpace(8),
-              // 标题
-              Text(
-                anime.title ?? '',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w500),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              addVerticalSpace(2),
-              // 副标题
-              Text(
-                subtitleOf(anime),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: const Color(0xFF9CA3AF)),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// 副标题：优先简介，其次年份与放送形式
-  String subtitleOf(Anime anime) {
+  /// 竖版海报卡（默认态）：2:3 封面 + 评分角标 + 标题/副标题
+  Widget buildPosterCard(BuildContext context, Anime anime) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AspectRatio(
+          aspectRatio: 2 / 3,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Hero(
+                tag: uniqueHeroTag,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: anime.image,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) =>
+                        buildFallback(context),
+                  ),
+                ),
+              ),
+              if (anime.score != null)
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: buildScoreBadge(context),
+                ),
+            ],
+          ),
+        ),
+        addVerticalSpace(8),
+        Text(
+          anime.title ?? '',
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(fontWeight: FontWeight.w500),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        addVerticalSpace(2),
+        Text(
+          posterSubtitleOf(anime),
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: const Color(0xFF9CA3AF)),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  /// 横幅卡（悬停态）：16:9 横幅 + 评分/标签/操作按钮 + 标题/副标题
+  Widget buildBannerCard(BuildContext context, Anime anime) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x80000000),
+            blurRadius: 24,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: anime.bannerImage ?? anime.image,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) =>
+                        buildFallback(context),
+                  ),
+                ),
+                if (anime.score != null)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: buildScoreBadge(context),
+                  ),
+                if (tagsOf(anime).isNotEmpty)
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: buildTags(context, anime),
+                  ),
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: buildActions(context, anime),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  anime.title ?? '',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                addVerticalSpace(2),
+                Text(
+                  bannerSubtitleOf(anime),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: const Color(0xFF9CA3AF)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 海报卡副标题：优先简介，其次年份与放送形式
+  String posterSubtitleOf(Anime anime) {
     final synopsis = anime.synopsis ?? '';
     if (synopsis.isNotEmpty) {
       return synopsis;
     }
+    return metaOf(anime);
+  }
+
+  /// 横幅卡副标题：优先日文原名，其次年份与放送形式
+  String bannerSubtitleOf(Anime anime) {
+    final titleJa = anime.titleJapanese ?? '';
+    if (titleJa.isNotEmpty) {
+      return titleJa;
+    }
+    return metaOf(anime);
+  }
+
+  /// 年份与放送形式
+  String metaOf(Anime anime) {
     final meta = <String>[
       if (anime.aired != null) '${anime.aired!.year}',
       if (anime.type != null && anime.type!.isNotEmpty) anime.type!,
     ];
     return meta.join(' · ');
+  }
+
+  /// 图片上的标签（放送形式/话数/年份）
+  List<String> tagsOf(Anime anime) {
+    return [
+      if (anime.type != null && anime.type!.isNotEmpty) anime.type!,
+      if (anime.episodes != null) '全${anime.episodes}话',
+      if (anime.aired != null) '${anime.aired!.year}',
+    ];
+  }
+
+  /// 标签行（半透明胶囊）
+  Widget buildTags(BuildContext context, Anime anime) {
+    final tags = tagsOf(anime);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < tags.length; i++) ...[
+          if (i > 0) addHorizontalSpace(6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0x66000000),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              tags[i],
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// 评分角标
+  Widget buildScoreBadge(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0x99000000),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        widget.anime.score!.toStringAsFixed(1),
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.copyWith(color: const Color(0xFFFFC107)),
+      ),
+    );
+  }
+
+  /// 操作按钮：收藏 + 播放
+  Widget buildActions(BuildContext context, Anime anime) {
+    final favoriteSelected = widget.animeViewModel.isFavorite(anime);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 收藏按钮
+        GestureDetector(
+          onTap: () {
+            widget.animeViewModel.toggleFavorite(anime);
+            setState(() {});
+          },
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Color(0x66000000),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              favoriteSelected ? Icons.favorite : Icons.favorite_border,
+              color: favoriteSelected ? const Color(0xFFFF4757) : Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+        addHorizontalSpace(8),
+        // 播放按钮（跳转详情页）
+        GestureDetector(
+          onTap: () {
+            ref.read(heroTagProvider.notifier).state = uniqueHeroTag;
+            widget.onAnimeTap(anime.animeId);
+          },
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Color(0xFF3B82F6),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   /// 图片加载失败时的回退占位

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:movies/data/models/anime.dart';
+import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/ui/widgets/anime_widget.dart';
 import 'package:movies/utils/utils.dart';
 
 /// 动漫卡片网格组件
-/// 每屏默认展示 [itemCount] 张卡片，按窗口宽度自适应列数并自动分行
+/// 每屏默认展示 [itemCount] 张横幅卡片，按窗口宽度自适应列数并自动分行
 class HorizontalAnimes extends StatelessWidget {
   /// 动漫列表数据
   final List<Anime> animes;
+
+  /// 动漫视图模型（收藏状态与横幅补充数据）
+  final AnimeViewModel animeViewModel;
 
   /// 点击回调函数
   final OnAnimeTap onAnimeTap;
@@ -19,10 +23,11 @@ class HorizontalAnimes extends StatelessWidget {
   final int itemCount;
 
   const HorizontalAnimes({
+    required this.animeViewModel,
     required this.onAnimeTap,
     required this.animes,
     required this.animeType,
-    this.itemCount = 24,
+    this.itemCount = 12,
     super.key,
   });
 
@@ -53,6 +58,7 @@ class HorizontalAnimes extends StatelessWidget {
                             child: row * columns + col < items.length
                                 ? AnimeWidget(
                                     anime: items[row * columns + col],
+                                    animeViewModel: animeViewModel,
                                     onAnimeTap: onAnimeTap,
                                     animeType: animeType,
                                   )
@@ -69,11 +75,11 @@ class HorizontalAnimes extends StatelessWidget {
     );
   }
 
-  /// 根据可用宽度决定列数（宽度越大列数越多，行数随之减少）
+  /// 根据可用宽度决定列数（列数取 12 的约数，保证行内满排不留空位）
   int columnsForWidth(double width) {
-    if (width >= 1100) return 6;
-    if (width >= 650) return 4;
-    if (width >= 450) return 3;
+    if (width >= 1200) return 6;
+    if (width >= 1000) return 4;
+    if (width >= 650) return 3;
     return 2;
   }
 }
