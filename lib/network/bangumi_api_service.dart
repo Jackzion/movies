@@ -34,6 +34,7 @@ class BangumiApiService {
   }
 
   /// 搜索条目（type=2 固定为动画）
+  /// 分页参数 limit/offset 走 URL query（放 body 会被忽略）
   /// [rankFilter] / [ratingFilter] 为 Bangumi 过滤表达式，如 ['>= 1', '<= 300']
   /// [sort] 支持 match / heat / rank
   Future<Response> searchSubjects({
@@ -61,13 +62,15 @@ class BangumiApiService {
     final body = <String, dynamic>{
       'keyword': keyword,
       'filter': filter,
-      'limit': limit,
-      'offset': offset,
     };
     if (sort != null) {
       body['sort'] = sort;
     }
-    return dio.post('/v0/search/subjects', data: body);
+    return dio.post(
+      '/v0/search/subjects',
+      queryParameters: {'limit': limit, 'offset': offset},
+      data: body,
+    );
   }
 
   /// 获取条目详情

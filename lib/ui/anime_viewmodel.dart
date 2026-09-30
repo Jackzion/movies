@@ -16,6 +16,9 @@ import 'package:movies/utils/prefs.dart';
 /// 负责管理动漫数据的加载和分类
 /// 主数据源为 Bangumi，宽幅横幅与 PV 由 AniList 按需补充
 class AnimeViewModel {
+  // top - rate 数量
+  final int topRatedCount = 12;
+
   /// Bangumi API 服务
   final BangumiApiService bangumiApiService;
 
@@ -87,8 +90,8 @@ class AnimeViewModel {
     try {
       final response = await bangumiApiService.searchSubjects(
         sort: 'heat',
-        limit: 10,
-        offset: (page - 1) * 10,
+        limit: topRatedCount,
+        offset: (page - 1) * topRatedCount,
       );
       if (response.statusCode == 200) {
         trendingAnimes = _parseSearchResults(response.data);
@@ -106,9 +109,9 @@ class AnimeViewModel {
   Future<List<Anime>?> getPopular(int page) async {
     try {
       final response = await bangumiApiService.searchSubjects(
-        ratingFilter: ['>= 8.5'],
-        limit: 10,
-        offset: (page - 1) * 10,
+        ratingFilter: ['>= 8.0'],
+        limit: topRatedCount,
+        offset: (page - 1) * topRatedCount,
       );
       if (response.statusCode == 200) {
         popularAnimes = _parseSearchResults(response.data)
@@ -128,8 +131,8 @@ class AnimeViewModel {
     try {
       final response = await bangumiApiService.searchSubjects(
         rankFilter: ['>= 1', '<= 300'],
-        limit: 10,
-        offset: (page - 1) * 10,
+        limit: topRatedCount,
+        offset: (page - 1) * topRatedCount,
       );
       if (response.statusCode == 200) {
         topRatedAnimes = _parseSearchResults(response.data)
@@ -163,7 +166,7 @@ class AnimeViewModel {
           return doingB.compareTo(doingA);
         });
         nowPlayingAnimes =
-            items.map((e) => Anime.fromBangumi(e)).take(20).toList();
+            items.map((e) => Anime.fromBangumi(e)).take(topRatedCount).toList();
         return nowPlayingAnimes;
       }
       logError('Failed to load now playing anime: ${response.statusCode}');
