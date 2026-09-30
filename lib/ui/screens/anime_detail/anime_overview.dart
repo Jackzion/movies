@@ -4,13 +4,14 @@ import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/genre.dart';
 import 'package:movies/utils/utils.dart';
 
-/// 动漫简介组件
-/// 参考 Bangumi 详情页：元信息 + 章节按钮 + 简介 + 标签胶囊
+/// 动漫简介右栏组件
+/// 参考 Bangumi 详情页右侧：章节按钮 + 简介 + 标签胶囊
+/// 左侧海报与元信息由 AnimeDetail 布局提供
 class AnimeOverview extends StatefulWidget {
   /// 动漫详情数据
   final AnimeDetails details;
 
-  /// 上移量（兼容旧参数；新布局作为独立面板使用，不再压在封面渐变上）
+  /// 兼容旧参数（新布局不再使用上移重叠）
   final double overlapHeight;
 
   const AnimeOverview({
@@ -25,13 +26,11 @@ class AnimeOverview extends StatefulWidget {
 
 class _AnimeOverviewState extends State<AnimeOverview>
     with SingleTickerProviderStateMixin {
-  /// 动画控制器，控制类型标签滑入动画
   late final AnimationController _controller = AnimationController(
     duration: const Duration(seconds: 2),
     vsync: this,
   )..forward();
 
-  /// 偏移动画，从屏幕右侧滑入到正常位置
   late final Animation<Offset> _offsetAnimation = Tween<Offset>(
     begin: const Offset(1.0, 0.0),
     end: Offset.zero,
@@ -40,10 +39,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
     curve: Curves.elasticOut,
   ));
 
-  /// 是否展开全部章节
   bool _expandedChapters = false;
-
-  /// 标签区是否展开全部
   bool _expandedTags = false;
 
   @override
@@ -52,7 +48,6 @@ class _AnimeOverviewState extends State<AnimeOverview>
     super.dispose();
   }
 
-  /// 章节序号补零，如 1 → 01
   String _pad(int n) => n.toString().padLeft(2, '0');
 
   @override
@@ -63,56 +58,39 @@ class _AnimeOverviewState extends State<AnimeOverview>
     final synopsisLines = _splitSynopsis(synopsis);
     final episodes = details.episodes;
 
-    return Container(
-      color: const Color(0xFF2B2B2B),
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ===== 元信息：中文名 / 话数 =====
-          _MetaLine(
-            label: '中文名',
-            value: details.displayTitle,
-          ),
-          if (episodes != null) ...[
-            addVerticalSpace(8),
-            _MetaLine(label: '话数', value: '$episodes'),
-          ],
-
-          if (episodes != null && episodes > 0) ...[
-            addVerticalSpace(16),
-            _buildChapterHeader(context),
-            addVerticalSpace(12),
-            _buildChapterButtons(context, episodes),
-          ],
-
-          const Divider(
-            height: 1,
-            thickness: 1,
-            color: Color(0xFF3D3D3D),
-          ),
-          addVerticalSpace(20),
-
-          // ===== 简介 =====
-          if (synopsisLines.isNotEmpty)
-            for (final line in synopsisLines) ...[
-              _DescText(line),
-              addVerticalSpace(4),
-            ],
-
-          // ===== 标签区 =====
-          if (genres.isNotEmpty) ...[
-            addVerticalSpace(12),
-            _buildTagBox(context, genres),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (episodes != null && episodes > 0) ...[
+          _buildChapterHeader(),
+          addVerticalSpace(12),
+          _buildChapterButtons(episodes),
+          addVerticalSpace(16),
         ],
-      ),
+
+        const Divider(
+          height: 1,
+          thickness: 1,
+          color: Color(0xFF3D3D3D),
+        ),
+        addVerticalSpace(18),
+
+        if (synopsisLines.isNotEmpty)
+          for (final line in synopsisLines) ...[
+            _DescText(line),
+            addVerticalSpace(4),
+          ],
+
+        if (genres.isNotEmpty) ...[
+          addVerticalSpace(14),
+          _buildTagBox(genres),
+        ],
+      ],
     );
   }
 
-  /// 章节列表标题行：「章节列表 [全部]」
-  Widget _buildChapterHeader(BuildContext context) {
+  Widget _buildChapterHeader() {
     final episodes = widget.details.episodes ?? 0;
     final showToggle = episodes > 12;
 
@@ -142,8 +120,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
     );
   }
 
-  /// 章节按钮网格（蓝色渐变胶囊）
-  Widget _buildChapterButtons(BuildContext context, int episodes) {
+  Widget _buildChapterButtons(int episodes) {
     final limit = _expandedChapters || episodes <= 12 ? episodes : 12;
     final shown = episodes.clamp(1, limit);
 
@@ -157,11 +134,11 @@ class _AnimeOverviewState extends State<AnimeOverview>
     );
   }
 
-  /// 标签信息盒：引导文案 + 胶囊标签
-  Widget _buildTagBox(BuildContext context, List<Genre> genres) {
+  Widget _buildTagBox(List<Genre> genres) {
     const maxVisible = 12;
-    final visible =
-        _expandedTags || genres.length <= maxVisible ? genres : genres.sublist(0, maxVisible);
+    final visible = _expandedTags || genres.length <= maxVisible
+        ? genres
+        : genres.sublist(0, maxVisible);
     final hasMore = genres.length > maxVisible;
 
     return Container(
@@ -194,7 +171,10 @@ class _AnimeOverviewState extends State<AnimeOverview>
                 if (hasMore)
                   GestureDetector(
                     onTap: () => setState(() => _expandedTags = !_expandedTags),
-                    child: _TagPill(name: _expandedTags ? '收起' : '更多+', count: null),
+                    child: _TagPill(
+                      name: _expandedTags ? '收起' : '更多+',
+                      count: null,
+                    ),
                   ),
               ],
             ),
@@ -204,7 +184,6 @@ class _AnimeOverviewState extends State<AnimeOverview>
     );
   }
 
-  /// 按空行/换行拆分简介为多行展示
   List<String> _splitSynopsis(String synopsis) {
     final normalized = synopsis.replaceAll('\r\n', '\n').trim();
     if (normalized.isEmpty) return const [];
@@ -213,42 +192,6 @@ class _AnimeOverviewState extends State<AnimeOverview>
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .toList();
-  }
-}
-
-/// 元信息行：标签 + 内容
-class _MetaLine extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _MetaLine({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.notoSansSc(
-            fontSize: 14,
-            height: 1.9,
-            color: const Color(0xFFB9B9B9),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.notoSansSc(
-              fontSize: 14,
-              height: 1.9,
-              color: const Color(0xFFB9B9B9),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }
 
