@@ -1,10 +1,10 @@
 /// 动漫角色数据模型
-/// Jikan API 返回的角色和声优信息
+/// 数据来源：Bangumi 条目角色（含 CV 声优）
 class AnimeCharacter {
   /// 角色信息
   final Character? character;
 
-  /// 角色在动画中的角色类型（如 Main, Supporting）
+  /// 角色在动画中的定位（如 主角/配角/客串/其他）
   final String? role;
 
   /// 声优列表
@@ -16,14 +16,18 @@ class AnimeCharacter {
     this.voiceActors,
   });
 
-  factory AnimeCharacter.fromJson(Map<String, dynamic> json) {
+  /// 从 Bangumi 角色条目构造
+  factory AnimeCharacter.fromBangumi(Map<String, dynamic> json) {
+    final images = json['images'] as Map<String, dynamic>?;
     return AnimeCharacter(
-      character: json['character'] != null
-          ? Character.fromJson(json['character'] as Map<String, dynamic>)
-          : null,
-      role: json['role'] as String?,
-      voiceActors: (json['voice_actors'] as List<dynamic>?)
-          ?.map((e) => VoiceActor.fromJson(e as Map<String, dynamic>))
+      character: Character(
+        bangumiId: json['id'] as int?,
+        name: json['name'] as String?,
+        image: images?['large'] as String? ?? images?['medium'] as String?,
+      ),
+      role: json['relation'] as String?,
+      voiceActors: (json['actors'] as List<dynamic>?)
+          ?.map((e) => VoiceActor.fromBangumi(e as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -32,69 +36,47 @@ class AnimeCharacter {
 /// 角色信息
 class Character {
   /// 角色 ID
-  final int? malId;
+  final int? bangumiId;
 
   /// 角色名称
   final String? name;
 
-  /// 角色图片
-  final dynamic images;
+  /// 角色图片地址
+  final String? image;
 
-  const Character({this.malId, this.name, this.images});
-
-  factory Character.fromJson(Map<String, dynamic> json) {
-    return Character(
-      malId: json['mal_id'] as int?,
-      name: json['name'] as String?,
-      images: json['images'],
-    );
-  }
+  const Character({this.bangumiId, this.name, this.image});
 
   /// 获取角色头像 URL
-  String get imageUrl {
-    if (images is Map<String, dynamic>) {
-      final jpg = images['jpg'] as Map<String, dynamic>?;
-      if (jpg != null) {
-        return jpg['image_url'] ?? '';
-      }
-    }
-    return '';
-  }
+  String get imageUrl => image ?? '';
 }
 
 /// 声优信息
 class VoiceActor {
   /// 声优 ID
-  final int? malId;
+  final int? bangumiId;
 
   /// 声优名称
   final String? name;
 
-  /// 声优图片
-  final dynamic images;
+  /// 声优图片地址
+  final String? image;
 
-  /// 语言
+  /// 语言（动画条目固定为日语）
   final String? language;
 
-  const VoiceActor({this.malId, this.name, this.images, this.language});
+  const VoiceActor({this.bangumiId, this.name, this.image, this.language});
 
-  factory VoiceActor.fromJson(Map<String, dynamic> json) {
+  /// 从 Bangumi 声优条目构造
+  factory VoiceActor.fromBangumi(Map<String, dynamic> json) {
+    final images = json['images'] as Map<String, dynamic>?;
     return VoiceActor(
-      malId: json['mal_id'] as int?,
+      bangumiId: json['id'] as int?,
       name: json['name'] as String?,
-      images: json['images'],
-      language: json['language'] as String?,
+      image: images?['large'] as String? ?? images?['medium'] as String?,
+      language: '日语',
     );
   }
 
   /// 获取声优头像 URL
-  String get imageUrl {
-    if (images is Map<String, dynamic>) {
-      final jpg = images['jpg'] as Map<String, dynamic>?;
-      if (jpg != null) {
-        return jpg['image_url'] ?? '';
-      }
-    }
-    return '';
-  }
+  String get imageUrl => image ?? '';
 }

@@ -1,91 +1,99 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'anime.g.dart';
-
-/// 解析 aired 字段
-DateTime? _parseAired(dynamic value) {
-  if (value == null) return null;
-  if (value is Map<String, dynamic>) {
-    final from = value['from'] as String?;
-    if (from != null && from.isNotEmpty) {
-      try { return DateTime.parse(from); } catch (e) { return null; }
-    }
-  }
-  return null;
-}
-
-@JsonSerializable()
+/// 动漫数据模型
+/// 数据来源：Bangumi 条目（搜索/日历），横幅与 PV 由 AniList 按需补充
 class Anime {
-  @JsonKey(name: 'mal_id')
-  final int? malId;
-  final String? title;
-  @JsonKey(name: 'title_english')
-  final String? titleEnglish;
-  final Images? images;
-  final bool? airing;
-  final double? score;
-  @JsonKey(name: 'scored_by')
-  final int? scoredBy;
-  final int? rank;
-  final int? members;
-  final String? type;
-  final String? status;
-  final int? episodes;
-  @JsonKey(fromJson: _parseAired)
-  final DateTime? aired;
-  final String? synopsis;
-  final String? background;
-  final String? season;
-  final int? year;
-  @JsonKey(name: 'rating')
-  final String? ratingClass;
+  /// Bangumi 条目 ID
+  final int bangumiId;
 
-  const Anime({
-    this.malId, this.title, this.titleEnglish, this.images,
-    this.airing, this.score, this.scoredBy, this.rank, this.members,
-    this.type, this.status, this.episodes, this.aired, this.synopsis,
-    this.background, this.season, this.year, this.ratingClass,
+  /// 标题（优先中文名，回退日文原名）
+  final String? title;
+
+  /// 日文原名（用于 AniList 匹配）
+  final String? titleJapanese;
+
+  /// 封面图地址
+  final String image;
+
+  /// 简介
+  final String? synopsis;
+
+  /// 首播日期
+  final DateTime? aired;
+
+  /// 评分（0-10）
+  final double? score;
+
+  /// 排行（越小越高）
+  final int? rank;
+
+  /// 集数
+  final int? episodes;
+
+  /// 放送形式（TV/剧场版/OVA 等）
+  final String? type;
+
+  /// 宽幅横幅图（AniList 按需加载，可能为空）
+  String? bannerImage;
+
+  Anime({
+    required this.bangumiId,
+    this.title,
+    this.titleJapanese,
+    this.image = '',
+    this.synopsis,
+    this.aired,
+    this.score,
+    this.rank,
+    this.episodes,
+    this.type,
+    this.bannerImage,
   });
 
-  factory Anime.fromJson(Map<String, dynamic> json) => _$AnimeFromJson(json);
-  Map<String, dynamic> toJson() => _$AnimeToJson(this);
+  /// 从 Bangumi 条目（搜索结果/日历项）构造
+  factory Anime.fromBangumi(Map<String, dynamic> json) {
+    final images = json['images'] as Map<String, dynamic>?;
+    final rating = json['rating'] as Map<String, dynamic>?;
+    final nameCn = json['name_cn'] as String?;
+    final name = json['name'] as String?;
+    return Anime(
+      bangumiId: json['id'] as int? ?? 0,
+      title: (nameCn != null && nameCn.isNotEmpty) ? nameCn : name,
+      titleJapanese: name,
+      image: images?['large'] as String? ?? images?['medium'] as String? ?? '',
+      synopsis: json['summary'] as String?,
+      aired: _parseDate(
+        json['date'] as String? ?? json['air_date'] as String?,
+      ),
+      score: _parseDouble(rating?['score']),
+      rank: _parseInt(json['rank'] ?? rating?['rank']),
+      episodes: _parseInt(json['eps'] ?? json['total_episodes']),
+      type: json['platform'] as String?,
+    );
+  }
 
-  String get imageUrl => images?.jpg?.largeImageUrl ?? images?.jpg?.imageUrl ?? '';
-  int get animeId => malId ?? 0;
-  String get image => imageUrl;
-}
+  /// 动漫 ID（即 Bangumi 条目 ID）
+  int get animeId => bangumiId;
 
-@JsonSerializable()
-class Images {
-  final Jpg? jpg;
-  final WebP? webp;
-  const Images({this.jpg, this.webp});
-  factory Images.fromJson(Map<String, dynamic> json) => _$ImagesFromJson(json);
-  Map<String, dynamic> toJson() => _$ImagesToJson(this);
-}
+  /// 封面图地址
+  String get imageUrl => image;
 
-@JsonSerializable()
-class Jpg {
-  @JsonKey(name: 'image_url')
-  final String? imageUrl;
-  @JsonKey(name: 'small_image_url')
-  final String? smallImageUrl;
-  @JsonKey(name: 'large_image_url')
-  final String? largeImageUrl;
-  const Jpg({this.imageUrl, this.smallImageUrl, this.largeImageUrl});
-  factory Jpg.fromJson(Map<String, dynamic> json) => _$JpgFromJson(json);
-  Map<String, dynamic> toJson() => _$JpgToJson(this);
-}
+  static DateTime? _parseDate(String? value) {
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(value);
+  }
 
-@JsonSerializable()
-class WebP {
-  @JsonKey(name: 'image_url')
-  final String? imageUrl;
-  @JsonKey(name: 'small_image_url')
-  final String? smallImageUrl;
-  @JsonKey(name: 'large_image_url')
-  final String? largeImageUrl;
-  const WebP({this.imageUrl, this.smallImageUrl, this.largeImageUrl});
-  factory WebP.fromJson(Map<String, dynamic> json) => _$WebPFromJson(json);
-  Map<String, dynamic> toJson() => _$WebPToJson(this);
+  static int? _parseInt(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    return value is num ? value.toInt() : int.tryParse(value.toString());
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    return value is num ? value.toDouble() : double.tryParse(value.toString());
+  }
 }

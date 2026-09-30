@@ -1,6 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:movies/network/anime_api_service.dart';
+import 'package:movies/network/anilist_api_service.dart';
+import 'package:movies/network/bangumi_api_service.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/prefs.dart';
@@ -12,10 +12,15 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 AppRouter appRouter(Ref ref) => AppRouter();
 
-/// 动漫 API 服务提供者
-/// 提供 AnimeAPIService 实例
+/// Bangumi API 服务提供者
+/// 提供 BangumiApiService 实例（主数据源）
 @Riverpod(keepAlive: true)
-AnimeAPIService animeAPIService(Ref ref) => AnimeAPIService();
+BangumiApiService bangumiApiService(Ref ref) => BangumiApiService();
+
+/// AniList API 服务提供者
+/// 提供 AniListApiService 实例（补充横幅与 PV）
+@Riverpod(keepAlive: true)
+AniListApiService anilistApiService(Ref ref) => AniListApiService();
 
 /// SharedPreferences 提供者
 /// 异步加载本地存储实例
@@ -35,7 +40,9 @@ Future<Prefs> prefs(Ref ref) async {
 @Riverpod(keepAlive: true)
 Future<AnimeViewModel> animeViewModel(Ref ref) async {
   final model = AnimeViewModel(
-    animeAPIService: ref.read(animeAPIServiceProvider),
+    bangumiApiService: ref.read(bangumiApiServiceProvider),
+    aniListApiService: ref.read(anilistApiServiceProvider),
+    prefs: await ref.read(prefsProvider.future),
   );
   await model.setup();
   return model;

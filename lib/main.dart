@@ -5,14 +5,18 @@ import 'package:lumberdash/lumberdash.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/ui/theme/theme.dart';
+import 'package:movies/utils/system_proxy.dart';
   
 void main() { 
   // pod_player 在 Windows/Linux/macOS 底层用 media_kit,
-  // 必须显式初始化,否则视频播放会直接报 "Error while playing video"
+  // 必须显式初始化，否则视频播放会直接报 "Error while playing video"
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
-  // 初始化 lumberdash 日志库
+  // 全局应用系统代理（API 请求与图片加载都走代理）
+  applySystemProxy();
+
+  // 初始化 lumberdash 日志工具
   putLumberdashToWork(withClients: [ColorizeLumberdash()]);
 
   runApp(const ProviderScope(child: MainApp()));

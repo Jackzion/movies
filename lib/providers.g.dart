@@ -54,55 +54,115 @@ final class AppRouterProvider
 
 String _$appRouterHash() => r'fc1228daa214cc1ad475cfdeafc6db36a6a237b5';
 
-/// 动漫 API 服务提供者
-/// 提供 AnimeAPIService 实例
+/// Bangumi API 服务提供者
+/// 提供 BangumiApiService 实例（主数据源）
 
-@ProviderFor(animeAPIService)
-final animeAPIServiceProvider = AnimeAPIServiceProvider._();
+@ProviderFor(bangumiApiService)
+final bangumiApiServiceProvider = BangumiApiServiceProvider._();
 
-/// 动漫 API 服务提供者
-/// 提供 AnimeAPIService 实例
+/// Bangumi API 服务提供者
+/// 提供 BangumiApiService 实例（主数据源）
 
-final class AnimeAPIServiceProvider
+final class BangumiApiServiceProvider
     extends
-        $FunctionalProvider<AnimeAPIService, AnimeAPIService, AnimeAPIService>
-    with $Provider<AnimeAPIService> {
-  /// 动漫 API 服务提供者
-  /// 提供 AnimeAPIService 实例
-  AnimeAPIServiceProvider._()
+        $FunctionalProvider<
+          BangumiApiService,
+          BangumiApiService,
+          BangumiApiService
+        >
+    with $Provider<BangumiApiService> {
+  /// Bangumi API 服务提供者
+  /// 提供 BangumiApiService 实例（主数据源）
+  BangumiApiServiceProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'animeAPIServiceProvider',
+        name: r'bangumiApiServiceProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$animeAPIServiceHash();
+  String debugGetCreateSourceHash() => _$bangumiApiServiceHash();
 
   @$internal
   @override
-  $ProviderElement<AnimeAPIService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<BangumiApiService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
-  AnimeAPIService create(Ref ref) {
-    return animeAPIService(ref);
+  BangumiApiService create(Ref ref) {
+    return bangumiApiService(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AnimeAPIService value) {
+  Override overrideWithValue(BangumiApiService value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AnimeAPIService>(value),
+      providerOverride: $SyncValueProvider<BangumiApiService>(value),
     );
   }
 }
 
-String _$animeAPIServiceHash() => r'a48d1092bec3dfb9ea9a2f42f5b0d6c4c53e349f';
+String _$bangumiApiServiceHash() => r'93c3a4e3b3235725f4f72c078252c733ea30a285';
+
+/// AniList API 服务提供者
+/// 提供 AniListApiService 实例（补充横幅与 PV）
+
+@ProviderFor(anilistApiService)
+final anilistApiServiceProvider = AnilistApiServiceProvider._();
+
+/// AniList API 服务提供者
+/// 提供 AniListApiService 实例（补充横幅与 PV）
+
+final class AnilistApiServiceProvider
+    extends
+        $FunctionalProvider<
+          AniListApiService,
+          AniListApiService,
+          AniListApiService
+        >
+    with $Provider<AniListApiService> {
+  /// AniList API 服务提供者
+  /// 提供 AniListApiService 实例（补充横幅与 PV）
+  AnilistApiServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'anilistApiServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$anilistApiServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<AniListApiService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AniListApiService create(Ref ref) {
+    return anilistApiService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AniListApiService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AniListApiService>(value),
+    );
+  }
+}
+
+String _$anilistApiServiceHash() => r'c4c09ab7135789434efdd244b39779b776979883';
 
 /// SharedPreferences 提供者
 /// 异步加载本地存储实例
@@ -239,4 +299,4 @@ final class AnimeViewModelProvider
   }
 }
 
-String _$animeViewModelHash() => r'2dfe81fb83245799be87617a08a816708a72694d';
+String _$animeViewModelHash() => r'05cd2534a29b8f3ad84a3f20dd2b173476f5bcf1';

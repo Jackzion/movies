@@ -1,33 +1,43 @@
+import 'dart:convert';
+
 import 'package:lumberdash/lumberdash.dart';
 import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
-import 'package:movies/data/models/anime_response.dart';
+import 'package:movies/data/models/anime_extras.dart';
 import 'package:movies/data/models/anime_video.dart';
 import 'package:movies/data/models/favorite.dart';
 import 'package:movies/data/models/genre.dart';
-import 'package:movies/network/anime_api_service.dart';
+import 'package:movies/network/anilist_api_service.dart';
+import 'package:movies/network/bangumi_api_service.dart';
+import 'package:movies/utils/prefs.dart';
 
 /// 动漫视图模型
 /// 负责管理动漫数据的加载和分类
-/// 从 Jikan API 获取真实动漫数据
+/// 主数据源为 Bangumi，宽幅横幅与 PV 由 AniList 按需补充
 class AnimeViewModel {
-  /// 动漫 API 服务
-  final AnimeAPIService animeAPIService;
+  /// Bangumi API 服务
+  final BangumiApiService bangumiApiService;
 
-  /// 动漫类型列表
+  /// AniList API 服务
+  final AniListApiService aniListApiService;
+
+  /// 本地存储（用于缓存 AniList 补充数据）
+  final Prefs prefs;
+
+  /// 动漫标签列表（分类页）
   List<Genre>? animeGenres;
 
-  /// 热门动漫列表
+  /// 热门动漫列表（sort=heat）
   List<Anime> trendingAnimes = [];
 
-  /// 评分最高的动漫列表
-  List<Anime> topRatedAnimes = [];
-
-  /// 最受欢迎的动漫列表
+  /// 高评分动漫列表（评分 >= 8.5）
   List<Anime> popularAnimes = [];
 
-  /// 正在播出的动漫列表
+  /// 排行榜动漫列表（排名 <= 300）
+  List<Anime> topRatedAnimes = [];
+
+  /// 本季放送动漫列表（放送日历）
   List<Anime> nowPlayingAnimes = [];
 
   /// 收藏动漫流
@@ -36,123 +46,128 @@ class AnimeViewModel {
   /// 收藏动漫列表
   List<Favorite>? favoriteList;
 
+  /// AniList 补充数据缓存（bangumiId → extras）
+  final Map<int, AnimeExtras> extrasCache = {};
+
+  /// 条目详情缓存（bangumiId → 原始响应）
+  final Map<int, Map<String, dynamic>> _subjectCache = {};
+
+  /// 补充数据缓存是否已从本地加载
+  bool _extrasLoaded = false;
+
   /// 构造函数
-  AnimeViewModel({required this.animeAPIService});
+  AnimeViewModel({
+    required this.bangumiApiService,
+    required this.aniListApiService,
+    required this.prefs,
+  });
 
   /// 初始化视图模型
   Future<void> setup() async {
-    await Future.wait([
-      setupGenres(),
-    ]);
+    await setupGenres();
+    _loadExtrasCache();
   }
 
-  /// 加载动漫类型列表
+  /// 加载动漫标签列表
+  /// Bangumi 无独立标签接口，使用常用动画标签
   Future<void> setupGenres() async {
-    try {
-      final response = await animeAPIService.getGenres();
-      if (response.statusCode == 200) {
-        final data = response.data;
-        final genreData = data is Map<String, dynamic> ? data['data'] : data;
-        if (genreData is List<dynamic>) {
-          animeGenres = genreData
-              .map((e) => Genre.fromJson(e as Map<String, dynamic>))
-              .toList();
-        }
-      } else {
-        // 使用默认类型列表
-        animeGenres = _defaultGenres();
-      }
-    } catch (e) {
-      logError('Failed to load genres: $e');
-      animeGenres = _defaultGenres();
-    }
-  }
-
-  /// 默认类型列表（API 失败时使用）
-  List<Genre> _defaultGenres() {
-    return const [
-      Genre(malId: 1, name: 'Action'),
-      Genre(malId: 2, name: 'Adventure'),
-      Genre(malId: 4, name: 'Comedy'),
-      Genre(malId: 8, name: 'Drama'),
-      Genre(malId: 10, name: 'Fantasy'),
-      Genre(malId: 14, name: 'Horror'),
-      Genre(malId: 7, name: 'Mystery'),
-      Genre(malId: 22, name: 'Romance'),
-      Genre(malId: 24, name: 'Sci-Fi'),
-      Genre(malId: 36, name: 'Slice of Life'),
-      Genre(malId: 30, name: 'Sports'),
-      Genre(malId: 37, name: 'Supernatural'),
-      Genre(malId: 41, name: 'Thriller'),
+    const tagNames = [
+      '科幻', '奇幻', '恋爱', '百合', '治愈', '悬疑', '推理', '机战',
+      '校园', '音乐', '日常', '搞笑', '动作', '冒险', '魔法', '青春',
+      '剧情', '恐怖', '历史', '运动', '美食', '萌', '后宫', '异世界',
+    ];
+    animeGenres = [
+      for (var i = 0; i < tagNames.length; i++)
+        Genre(malId: i + 1, name: tagNames[i]),
     ];
   }
 
-  /// 获取热门动漫列表
+  /// 获取热门动漫列表（全站热度）
   Future<List<Anime>?> getTrendingAnimes(int page) async {
     try {
-      final response = await animeAPIService.getTopAnime(page: page, limit: 10);
+      final response = await bangumiApiService.searchSubjects(
+        sort: 'heat',
+        limit: 10,
+        offset: (page - 1) * 10,
+      );
       if (response.statusCode == 200) {
-        final animeResponse = AnimeResponse.fromJson(response.data);
-        trendingAnimes = animeResponse.data;
+        trendingAnimes = _parseSearchResults(response.data);
         return trendingAnimes;
-      } else {
-        logError('Failed to load trending anime: ${response.statusCode} - ${response.statusMessage}');
-        return null;
       }
+      logError('Failed to load trending anime: ${response.statusCode}');
+      return null;
     } catch (e) {
       logError('Error loading trending anime: $e');
       return null;
     }
   }
 
-  /// 获取评分最高的动漫列表
-  Future<List<Anime>?> getTopRated(int page) async {
-    try {
-      final response = await animeAPIService.getTopAnime(page: page, limit: 10);
-      if (response.statusCode == 200) {
-        final animeResponse = AnimeResponse.fromJson(response.data);
-        topRatedAnimes = animeResponse.data;
-        return topRatedAnimes;
-      } else {
-        logError('Failed to load top rated anime: ${response.statusCode} - ${response.statusMessage}');
-        return null;
-      }
-    } catch (e) {
-      logError('Error loading top rated anime: $e');
-      return null;
-    }
-  }
-
-  /// 获取最受欢迎的动漫列表
+  /// 获取高评分动漫列表（评分 >= 8.5，按评分排序）
   Future<List<Anime>?> getPopular(int page) async {
     try {
-      final response = await animeAPIService.getTopAnime(page: page, limit: 10);
+      final response = await bangumiApiService.searchSubjects(
+        ratingFilter: ['>= 8.5'],
+        limit: 10,
+        offset: (page - 1) * 10,
+      );
       if (response.statusCode == 200) {
-        final animeResponse = AnimeResponse.fromJson(response.data);
-        popularAnimes = animeResponse.data;
+        popularAnimes = _parseSearchResults(response.data)
+          ..sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
         return popularAnimes;
-      } else {
-        logError('Failed to load popular anime: ${response.statusCode} - ${response.statusMessage}');
-        return null;
       }
+      logError('Failed to load popular anime: ${response.statusCode}');
+      return null;
     } catch (e) {
       logError('Error loading popular anime: $e');
       return null;
     }
   }
 
-  /// 获取正在播出的动漫列表
+  /// 获取排行榜动漫列表（排名 <= 300，按排名排序）
+  Future<List<Anime>?> getTopRated(int page) async {
+    try {
+      final response = await bangumiApiService.searchSubjects(
+        rankFilter: ['>= 1', '<= 300'],
+        limit: 10,
+        offset: (page - 1) * 10,
+      );
+      if (response.statusCode == 200) {
+        topRatedAnimes = _parseSearchResults(response.data)
+          ..sort((a, b) => (a.rank ?? 9999).compareTo(b.rank ?? 9999));
+        return topRatedAnimes;
+      }
+      logError('Failed to load top rated anime: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      logError('Error loading top rated anime: $e');
+      return null;
+    }
+  }
+
+  /// 获取本季放送动漫列表（放送日历，按在看人数排序）
   Future<List<Anime>?> getNowPlaying(int page) async {
     try {
-      final response = await animeAPIService.getSeasonNow(page: page, limit: 10);
+      final response = await bangumiApiService.getCalendar();
       if (response.statusCode == 200) {
-        final animeResponse = AnimeResponse.fromJson(response.data);
-        nowPlayingAnimes = animeResponse.data;
+        final items = <Map<String, dynamic>>[];
+        final days = response.data as List<dynamic>;
+        for (final day in days) {
+          final dayItems = (day as Map<String, dynamic>)['items'];
+          if (dayItems is List<dynamic>) {
+            items.addAll(dayItems.cast<Map<String, dynamic>>());
+          }
+        }
+        items.sort((a, b) {
+          final doingA = _collectionDoing(a);
+          final doingB = _collectionDoing(b);
+          return doingB.compareTo(doingA);
+        });
+        nowPlayingAnimes =
+            items.map((e) => Anime.fromBangumi(e)).take(20).toList();
         return nowPlayingAnimes;
-      } else {
-        logError('Failed to load now playing anime: ${response.statusCode} - ${response.statusMessage}');
-        return null;
       }
+      logError('Failed to load now playing anime: ${response.statusCode}');
+      return null;
     } catch (e) {
       logError('Error loading now playing anime: $e');
       return null;
@@ -161,10 +176,14 @@ class AnimeViewModel {
 
   /// 根据动漫 ID 查找动漫
   Anime? findAnimeById(int animeId) {
-    // 先在已加载的列表中查找
-    for (final list in [trendingAnimes, topRatedAnimes, popularAnimes, nowPlayingAnimes]) {
+    for (final list in [
+      trendingAnimes,
+      topRatedAnimes,
+      popularAnimes,
+      nowPlayingAnimes
+    ]) {
       for (final anime in list) {
-        if (anime.malId == animeId) {
+        if (anime.bangumiId == animeId) {
           return anime;
         }
       }
@@ -172,11 +191,20 @@ class AnimeViewModel {
     return null;
   }
 
+  /// 确保动漫的 AniList 补充数据（横幅/PV）已加载
+  /// 按需请求 AniList 并持久化缓存，失败时横幅为空（UI 回退封面图）
+  Future<void> ensureExtras(Anime anime) async {
+    if (anime.bannerImage != null) {
+      return;
+    }
+    final extras =
+        await _getExtras(anime.bangumiId, anime.titleJapanese, anime.title);
+    anime.bannerImage = extras.bannerImage;
+  }
+
   /// 创建收藏动漫流
   Stream<List<Favorite>> streamFavorites() {
-    if (favoriteList == null) {
-      favoriteList = [];
-    }
+    favoriteList ??= [];
     favoriteStream = Stream.value(favoriteList!);
     return favoriteStream!;
   }
@@ -196,85 +224,54 @@ class AnimeViewModel {
   /// 获取动漫详情
   Future<AnimeDetails?> getAnimeDetails(int animeId) async {
     try {
-      final response = await animeAPIService.getAnimeDetails(animeId);
-      if (response.statusCode == 200) {
-        try {
-          final data = response.data;
-          if (data is! Map<String, dynamic>) {
-            logError('Invalid response type: ${data.runtimeType}');
-            return null;
-          }
-          final animeData = data['data'];
-          if (animeData is! Map<String, dynamic>) {
-            logError('Invalid data type: ${animeData.runtimeType}');
-            return null;
-          }
-          return AnimeDetails.fromJson(animeData);
-        } catch (e) {
-          logError('Failed to parse anime details: $e');
-          return null;
-        }
-      } else {
-        logError('Failed to load anime details: ${response.statusCode} - ${response.statusMessage}');
+      final subject = await _getSubject(animeId);
+      if (subject == null) {
         return null;
       }
+      return AnimeDetails.fromBangumi(subject);
     } catch (e) {
       logError('Error loading anime details: $e');
       return null;
     }
   }
 
-  /// 获取动漫视频列表（预告片/ED/OP）
+  /// 获取动漫 PV 列表（来自 AniList，可能为空）
   Future<List<AnimeVideo>> getAnimeVideos(int animeId) async {
-    try {
-      final response = await animeAPIService.getAnimeVideos(animeId);
-      if (response.statusCode == 200) {
-        try {
-          final data = response.data;
-          final videoData = data is Map<String, dynamic> ? data['data'] : data;
-          if (videoData is Map<String, dynamic>) {
-            final promo = videoData['promo'] as List<dynamic>? ?? [];
-            return promo
-                .map((e) => AnimeVideo.fromJson(e as Map<String, dynamic>))
-                .toList();
-          }
-          return [];
-        } catch (e) {
-          logError('Failed to parse anime videos: $e');
-          return [];
-        }
-      } else {
-        logError('Failed to load anime videos: ${response.statusCode}');
-        return [];
-      }
-    } catch (e) {
-      logError('Error loading anime videos: $e');
+    String? nameJa;
+    String? nameCn;
+    final anime = findAnimeById(animeId);
+    if (anime != null) {
+      nameJa = anime.titleJapanese;
+      nameCn = anime.title;
+    } else {
+      final details = await getAnimeDetails(animeId);
+      nameJa = details?.titleJapanese;
+      nameCn = details?.title;
+    }
+    final extras = await _getExtras(animeId, nameJa, nameCn);
+    final youtubeId = extras.youtubeId;
+    if (youtubeId == null || youtubeId.isEmpty) {
       return [];
     }
+    return [AnimeVideo(title: 'PV', youtubeId: youtubeId)];
   }
 
   /// 获取动漫角色和声优列表
   Future<List<AnimeCharacter>> getAnimeCharacters(int animeId) async {
     try {
-      final response = await animeAPIService.getAnimeCharacters(animeId);
+      final response = await bangumiApiService.getSubjectCharacters(animeId);
       if (response.statusCode == 200) {
-        try {
-          final data = response.data;
-          final characterData = data is Map<String, dynamic> ? data['data'] : data;
-          if (characterData is List<dynamic>) {
-            return characterData
-                .map((e) => AnimeCharacter.fromJson(e as Map<String, dynamic>))
-                .toList();
-          }
-          return [];
-        } catch (e) {
-          logError('Failed to parse anime characters: $e');
+        final data = response.data;
+        if (data is! List<dynamic>) {
           return [];
         }
-      } else {
-        logError('Failed to load anime characters: ${response.statusCode}');
-        return [];
+        return data
+            .whereType<Map<String, dynamic>>()
+            .map(AnimeCharacter.fromBangumi)
+            .toList();
       }
+      logError('Failed to load anime characters: ${response.statusCode}');
+      return [];
     } catch (e) {
       logError('Error loading anime characters: $e');
       return [];
@@ -284,34 +281,183 @@ class AnimeViewModel {
   /// 搜索动漫
   Future<List<Anime>?> searchAnimes(String query, int page) async {
     try {
-      final response = await animeAPIService.searchAnime(query, page: page);
+      final response = await bangumiApiService.searchSubjects(
+        keyword: query,
+        limit: 10,
+        offset: (page - 1) * 10,
+      );
       if (response.statusCode == 200) {
-        final animeResponse = AnimeResponse.fromJson(response.data);
-        return animeResponse.data;
-      } else {
-        logError('Failed to search anime: ${response.statusCode} - ${response.statusMessage}');
-        return null;
+        return _parseSearchResults(response.data);
       }
+      logError('Failed to search anime: ${response.statusCode}');
+      return null;
     } catch (e) {
       logError('Error searching anime: $e');
       return null;
     }
   }
 
-  /// 按类型筛选动漫
+  /// 按标签筛选动漫
   Future<List<Anime>?> getAnimesByGenre(int genreId, int page) async {
-    try {
-      final response = await animeAPIService.getAnimeByGenre(genreId, page: page);
-      if (response.statusCode == 200) {
-        final animeResponse = AnimeResponse.fromJson(response.data);
-        return animeResponse.data;
-      } else {
-        logError('Failed to load anime by genre: ${response.statusCode} - ${response.statusMessage}');
-        return null;
+    String? tagName;
+    for (final genre in animeGenres ?? const <Genre>[]) {
+      if (genre.malId == genreId) {
+        tagName = genre.name;
+        break;
       }
+    }
+    if (tagName == null) {
+      return null;
+    }
+    try {
+      final response = await bangumiApiService.searchSubjects(
+        tags: [tagName],
+        limit: 10,
+        offset: (page - 1) * 10,
+      );
+      if (response.statusCode == 200) {
+        return _parseSearchResults(response.data);
+      }
+      logError('Failed to load anime by genre: ${response.statusCode}');
+      return null;
     } catch (e) {
       logError('Error loading anime by genre: $e');
       return null;
     }
   }
+
+  /// 解析 Bangumi 搜索结果
+  List<Anime> _parseSearchResults(dynamic data) {
+    if (data is! Map<String, dynamic>) {
+      return [];
+    }
+    final items = data['data'];
+    if (items is! List<dynamic>) {
+      return [];
+    }
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(Anime.fromBangumi)
+        .toList();
+  }
+
+  /// 提取条目的在看人数（日历排序用）
+  int _collectionDoing(Map<String, dynamic> json) {
+    final collection = json['collection'] as Map<String, dynamic>?;
+    final doing = collection?['doing'];
+    return doing is num ? doing.toInt() : 0;
+  }
+
+  /// 获取条目详情（带缓存，供详情页与 PV 共用）
+  Future<Map<String, dynamic>?> _getSubject(int animeId) async {
+    final cached = _subjectCache[animeId];
+    if (cached != null) {
+      return cached;
+    }
+    try {
+      final response = await bangumiApiService.getSubject(animeId);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final subject = response.data as Map<String, dynamic>;
+        _subjectCache[animeId] = subject;
+        return subject;
+      }
+      logError('Failed to load anime subject: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      logError('Error loading anime subject: $e');
+      return null;
+    }
+  }
+
+  /// 获取 AniList 补充数据（横幅/PV），带内存与本地缓存
+  /// Bangumi 与 AniList 无共享 ID，按日文原名（回退中文名）搜索匹配
+  Future<AnimeExtras> _getExtras(
+    int bangumiId,
+    String? nameJa,
+    String? nameCn,
+  ) async {
+    _loadExtrasCache();
+    final cached = extrasCache[bangumiId];
+    if (cached != null) {
+      return cached;
+    }
+    var extras = const AnimeExtras();
+    for (final keyword in [nameJa, nameCn]) {
+      if (keyword == null || keyword.isEmpty) {
+        continue;
+      }
+      final result = await _searchAniList(keyword);
+      if (result != null) {
+        extras = result;
+        break;
+      }
+    }
+    extrasCache[bangumiId] = extras;
+    _saveExtrasCache();
+    return extras;
+  }
+
+  /// 搜索 AniList 获取横幅与 PV
+  Future<AnimeExtras?> _searchAniList(String keyword) async {
+    try {
+      final response = await aniListApiService.searchMedia(keyword);
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        return null;
+      }
+      final media = (data['data'] as Map<String, dynamic>?)?['Media'];
+      if (media is! Map<String, dynamic>) {
+        return null;
+      }
+      final trailer = media['trailer'] as Map<String, dynamic>?;
+      final site = trailer?['site'] as String?;
+      String? youtubeId;
+      if (site == null || site == 'youtube') {
+        youtubeId = trailer?['id'] as String?;
+      }
+      return AnimeExtras(
+        bannerImage: media['bannerImage'] as String?,
+        youtubeId: youtubeId,
+      );
+    } catch (e) {
+      logError('Error searching AniList: $e');
+      return null;
+    }
+  }
+
+  /// 从本地存储加载补充数据缓存
+  void _loadExtrasCache() {
+    if (_extrasLoaded) {
+      return;
+    }
+    _extrasLoaded = true;
+    final raw = prefs.getString(_extrasKey);
+    if (raw == null) {
+      return;
+    }
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      map.forEach((key, value) {
+        final id = int.tryParse(key);
+        if (id == null || value is! Map<String, dynamic>) {
+          return;
+        }
+        extrasCache[id] = AnimeExtras.fromJson(value);
+      });
+    } catch (e) {
+      logError('Error loading extras cache: $e');
+    }
+  }
+
+  /// 保存补充数据缓存到本地存储
+  void _saveExtrasCache() {
+    final raw = jsonEncode({
+      for (final entry in extrasCache.entries)
+        entry.key.toString(): entry.value.toJson(),
+    });
+    prefs.setString(_extrasKey, raw);
+  }
 }
+
+/// 补充数据缓存的本地存储键
+const String _extrasKey = 'AniListExtrasCache';

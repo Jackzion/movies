@@ -70,6 +70,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
   void initState() {
     super.initState();
     startAutoPlay();
+    loadExtras();
   }
 
   @override
@@ -113,8 +114,8 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: animationTime),
                 child: CachedNetworkImage(
-                  key: ValueKey(anime.image),
-                  imageUrl: anime.image,
+                  key: ValueKey(anime.bannerImage ?? anime.image),
+                  imageUrl: anime.bannerImage ?? anime.image,
                   fit: BoxFit.cover,
                   height: heroHeight,
                   width: double.infinity,
@@ -237,7 +238,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
   }
 
   /// 单个缩略图卡片
-  /// 选中状态显示白色边框和光晕
+  /// 点击切换横幅展示，选中状态显示白色边框和光晕
   Widget buildThumbnailCard(BuildContext context, Anime anime, int index) {
     final active = index == currentIndex;
     return GestureDetector(
@@ -302,6 +303,20 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
     });
     startAutoPlay();
     scrollToCurrent();
+    loadExtras();
+  }
+
+  /// 加载当前动漫的 AniList 补充数据（宽幅横幅），完成后刷新界面
+  void loadExtras() {
+    final animes = widget.animeViewModel.nowPlayingAnimes;
+    if (animes.isEmpty) {
+      return;
+    }
+    widget.animeViewModel.ensureExtras(animes[currentIndex]).then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   /// 启动自动轮播定时器
@@ -320,6 +335,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
         currentIndex = (currentIndex + 1) % count;
       });
       scrollToCurrent();
+      loadExtras();
     });
   }
 

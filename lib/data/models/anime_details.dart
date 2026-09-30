@@ -1,98 +1,147 @@
 import 'package:movies/data/models/genre.dart';
 
-/// 动漫详情数据模型（手写 fromJson，处理 Jikan API 所有 null 场景）
+/// 动漫详情数据模型
+/// 数据来源：Bangumi 条目详情
 class AnimeDetails {
-  final int? malId;
+  /// Bangumi 条目 ID
+  final int bangumiId;
+
+  /// 标题（优先中文名，回退日文原名）
   final String? title;
-  final String? titleEnglish;
+
+  /// 日文原名
   final String? titleJapanese;
-  final dynamic images;
+
+  /// 封面图地址
+  final String image;
+
+  /// 放送形式（TV/剧场版/OVA 等）
   final String? type;
-  final String? source;
+
+  /// 集数
   final int? episodes;
-  final String? status;
-  final bool? airing;
-  final dynamic aired;
-  final String? duration;
-  final String? rating;
+
+  /// 评分（0-10）
   final double? score;
-  final int? scoredBy;
+
+  /// 排行（越小越高）
   final int? rank;
-  final int? popularity;
+
+  /// 收藏人数合计（想看/在看/看过/搁置/抛弃）
   final int? members;
-  final int? favorites;
+
+  /// 简介
   final String? synopsis;
-  final String? background;
-  final String? season;
+
+  /// 放送年份
   final int? year;
+
+  /// 标签（取自 Bangumi 标签，用于类型展示）
   final List<Genre>? genres;
-  final List<dynamic>? studios;
 
   const AnimeDetails({
-    this.malId, this.title, this.titleEnglish, this.titleJapanese,
-    this.images, this.type, this.source, this.episodes, this.status,
-    this.airing, this.aired, this.duration, this.rating, this.score,
-    this.scoredBy, this.rank, this.popularity, this.members, this.favorites,
-    this.synopsis, this.background, this.season, this.year, this.genres,
-    this.studios,
+    required this.bangumiId,
+    this.title,
+    this.titleJapanese,
+    this.image = '',
+    this.type,
+    this.episodes,
+    this.score,
+    this.rank,
+    this.members,
+    this.synopsis,
+    this.year,
+    this.genres,
   });
 
-  factory AnimeDetails.fromJson(Map<String, dynamic> json) {
+  /// 从 Bangumi 条目详情构造
+  factory AnimeDetails.fromBangumi(Map<String, dynamic> json) {
+    final images = json['images'] as Map<String, dynamic>?;
+    final rating = json['rating'] as Map<String, dynamic>?;
+    final collection = json['collection'] as Map<String, dynamic>?;
+    final nameCn = json['name_cn'] as String?;
+    final name = json['name'] as String?;
+    final date = json['date'] as String?;
     return AnimeDetails(
-      malId: _parseInt(json['mal_id']),
-      title: json['title'] as String?,
-      titleEnglish: json['title_english'] as String?,
-      titleJapanese: json['title_japanese'] as String?,
-      images: json['images'],
-      type: json['type'] as String?,
-      source: json['source'] as String?,
-      episodes: _parseInt(json['episodes']),
-      status: json['status'] as String?,
-      airing: json['airing'] as bool?,
-      aired: json['aired'],
-      duration: json['duration'] as String?,
-      rating: json['rating'] as String?,
-      score: _parseDouble(json['score']),
-      scoredBy: _parseInt(json['scored_by']),
-      rank: _parseInt(json['rank']),
-      popularity: _parseInt(json['popularity']),
-      members: _parseInt(json['members']),
-      favorites: _parseInt(json['favorites']),
-      synopsis: json['synopsis'] as String?,
-      background: json['background'] as String?,
-      season: json['season'] as String?,
-      year: _parseInt(json['year']),
-      genres: (json['genres'] as List<dynamic>?)
-          ?.map((e) => Genre.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      studios: json['studios'] as List<dynamic>?,
+      bangumiId: json['id'] as int? ?? 0,
+      title: (nameCn != null && nameCn.isNotEmpty) ? nameCn : name,
+      titleJapanese: name,
+      image: images?['large'] as String? ?? images?['medium'] as String? ?? '',
+      type: json['platform'] as String?,
+      episodes: _parseInt(json['eps'] ?? json['total_episodes']),
+      score: _parseDouble(rating?['score']),
+      rank: _parseInt(rating?['rank']),
+      members: _parseCollectionTotal(collection),
+      synopsis: json['summary'] as String?,
+      year: _parseYear(date),
+      genres: _parseGenres(json['tags'] as List<dynamic>?),
     );
   }
 
-  static int? _parseInt(dynamic v) => v == null ? null : (v is num ? v.toInt() : (v is String ? int.tryParse(v) : null));
-  static double? _parseDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null));
+  /// 封面图地址
+  String get imageUrl => image;
 
-  Map<String, dynamic> toJson() => {
-    'mal_id': malId, 'title': title, 'title_english': titleEnglish,
-    'title_japanese': titleJapanese, 'images': images, 'type': type,
-    'source': source, 'episodes': episodes, 'status': status,
-    'airing': airing, 'aired': aired, 'duration': duration,
-    'rating': rating, 'score': score, 'scored_by': scoredBy,
-    'rank': rank, 'popularity': popularity, 'members': members,
-    'favorites': favorites, 'synopsis': synopsis, 'background': background,
-    'season': season, 'year': year,
-    'genres': genres?.map((e) => e.toJson()).toList(), 'studios': studios,
-  };
+  /// 展示标题（优先中文）
+  String get displayTitle => title ?? titleJapanese ?? '';
 
-  String get imageUrl {
-    if (images is Map<String, dynamic>) {
-      final jpg = images['jpg'] as Map<String, dynamic>?;
-      if (jpg != null) return jpg['large_image_url'] ?? jpg['image_url'] ?? '';
+  /// 从标签中提取类型（跳过年份、放送形式等元标签）
+  static List<Genre>? _parseGenres(List<dynamic>? tags) {
+    if (tags == null || tags.isEmpty) {
+      return null;
     }
-    return '';
+    const skip = {'TV', 'OVA', 'OAD', 'WEB', '剧场版', '动态漫画'};
+    final genres = <Genre>[];
+    for (final tag in tags) {
+      if (tag is! Map<String, dynamic>) {
+        continue;
+      }
+      final name = tag['name'] as String? ?? '';
+      if (name.isEmpty ||
+          skip.contains(name) ||
+          RegExp(r'^\d').hasMatch(name)) {
+        continue;
+      }
+      genres.add(Genre(malId: genres.length + 1, name: name));
+      if (genres.length >= 6) {
+        break;
+      }
+    }
+    return genres.isEmpty ? null : genres;
   }
 
-  String get backdropUrl => imageUrl;
+  static int? _parseCollectionTotal(Map<String, dynamic>? collection) {
+    if (collection == null) {
+      return null;
+    }
+    var total = 0;
+    var hasValue = false;
+    for (final value in collection.values) {
+      if (value is num) {
+        total += value.toInt();
+        hasValue = true;
+      }
+    }
+    return hasValue ? total : null;
+  }
 
-  String get displayTitle => titleEnglish ?? title ?? '';
+  static int? _parseYear(String? date) {
+    if (date == null || date.length < 4) {
+      return null;
+    }
+    return int.tryParse(date.substring(0, 4));
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    return value is num ? value.toInt() : int.tryParse(value.toString());
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    return value is num ? value.toDouble() : double.tryParse(value.toString());
+  }
 }

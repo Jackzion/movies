@@ -17,10 +17,13 @@ class AnimeVideo {
   });
 
   factory AnimeVideo.fromJson(Map<String, dynamic> json) {
+    // Jikan API 中 youtube_id 和 images 嵌套在 trailer 字段下
+    final trailer = json['trailer'] as Map<String, dynamic>?;
+    final images = trailer?['images'] as Map<String, dynamic>?;
     return AnimeVideo(
       title: json['title'] as String?,
-      youtubeId: json['youtube_id'] as String?,
-      imageUrl: json['images']?['medium_image_url'] as String?,
+      youtubeId: trailer?['youtube_id'] as String?,
+      imageUrl: images?['medium_image_url'] as String?,
     );
   }
 
