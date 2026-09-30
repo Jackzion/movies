@@ -10,7 +10,6 @@ import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/ui/screens/anime_detail/button_row.dart';
 import 'package:movies/ui/screens/anime_detail/detail_image.dart';
-import 'package:movies/ui/screens/anime_detail/genre_row.dart';
 import 'package:movies/ui/screens/anime_detail/anime_overview.dart';
 import 'package:movies/ui/screens/anime_detail/trailer.dart';
 import 'package:movies/ui/theme/theme.dart';
@@ -32,6 +31,7 @@ class AnimeDetail extends ConsumerStatefulWidget {
 class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   late AnimeViewModel animeViewModel;
   AnimeDetails? animeDetails;
+  String? bannerImage;
   List<AnimeVideo> videos = [];
   List<AnimeCharacter> characters = [];
 
@@ -97,8 +97,8 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                   slivers: [
                     SliverList(
                       delegate: SliverChildListDelegate([
-                        Stack(children: [DetailImage(details: details)]),
-                        GenreRow(genres: details.genres ?? []),
+                        // DetailImage 作封面层；AnimeOverview 为下方深色信息面板
+                        DetailImage(details: details),
                         AnimeOverview(details: details),
                         ValueListenableBuilder<bool>(
                           valueListenable: favoriteNotifier,
@@ -154,6 +154,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
 
   Future<void> loadData() async {
     animeDetails = await animeViewModel.getAnimeDetails(widget.animeId);
+
     // 并行加载视频和角色数据
     final results = await Future.wait([
       animeViewModel.getAnimeVideos(widget.animeId),

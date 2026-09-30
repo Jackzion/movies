@@ -10,11 +10,18 @@ import 'package:movies/utils/utils.dart';
 final yearFormat = DateFormat('yyyy');
 
 /// 动漫详情页顶部封面图组件
-/// 支持网络图片加载，带有入场动画和 Hero 过渡效果
+/// 网络图片 + 底部渐进色，标题叠在图上；下方衔接 AnimeOverview 信息面板
 class DetailImage extends ConsumerStatefulWidget {
   /// 动漫详情数据
   final AnimeDetails details;
-  const DetailImage({required this.details, super.key});
+
+  /// 封面图地址（用于详情页顶部）
+  final String? bannerImage;
+
+  /// 图片高度
+  final double height;
+
+  const DetailImage({required this.details, this.bannerImage, this.height = 280, super.key});
 
   @override
   ConsumerState<DetailImage> createState() => _DetailImageState();
@@ -22,7 +29,8 @@ class DetailImage extends ConsumerStatefulWidget {
 
 /// DetailImage 的状态类
 /// 使用 SingleTickerProviderStateMixin 提供动画所需的 Ticker
-class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProviderStateMixin {
+class _DetailImageState extends ConsumerState<DetailImage>
+    with SingleTickerProviderStateMixin {
   /// 动画控制器，控制图片入场动画
   /// 动画时长为 2 秒
   late final AnimationController _controller = AnimationController(
@@ -56,12 +64,16 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
     // 从 provider 获取当前的 Hero 动画标签
     final heroTag = ref.watch(heroTagProvider);
     final screenWidth = MediaQuery.of(context).size.width;
-    final imageUrl = widget.details.imageUrl;
+    final imageUrl = widget.details.image;
+    final imageHeight = widget.height;
+    // 标题停在渐变加深区上方，与下方 AnimeOverview 衔接
+    final titleBottom = imageHeight * 0.12 + 12;
 
     return Padding(
       padding: const EdgeInsets.only(left: 8.0, right: 8),
       child: SizedBox(
-        height: 200,
+        height: imageHeight,
+        width: screenWidth,
         child: Stack(
           children: [
             Align(
@@ -73,9 +85,27 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
                   child: CachedNetworkImage(
                     imageUrl: imageUrl,
                     alignment: Alignment.topCenter,
-                    fit: BoxFit.fitWidth,
-                    height: 200,
+                    fit: BoxFit.cover,
+                    height: imageHeight,
                     width: screenWidth,
+                  ),
+                ),
+              ),
+            ),
+            // 渐进色：上透明 → 下加深，衔接 AnimeOverview 深色面板
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      const Color(0x002B2B2B),
+                      const Color(0xB32B2B2B),
+                      const Color(0xFF2B2B2B),
+                    ],
+                    stops: const [0.0, 0.4, 0.75, 1.0],
                   ),
                 ),
               ),
@@ -83,7 +113,7 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
             Align(
               alignment: Alignment.bottomLeft,
               child: Padding(
-                padding: const EdgeInsets.only(left: 24.0, bottom: 8),
+                padding: EdgeInsets.only(left: 24.0, bottom: titleBottom),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -95,7 +125,9 @@ class _DetailImageState extends ConsumerState<DetailImage> with SingleTickerProv
                     ),
                     addVerticalSpace(4),
                     Text(
-                      widget.details.year != null ? yearFormat.format(DateTime(widget.details.year!)) : '',
+                      widget.details.year != null
+                          ? yearFormat.format(DateTime(widget.details.year!))
+                          : '',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
