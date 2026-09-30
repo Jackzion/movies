@@ -18,9 +18,21 @@ enum AnimeType {
 /// 悬停变形动画时长
 const morphDuration = Duration(milliseconds: 250);
 
+/// 海报卡文案区高度（上间距 + 标题 + 间距 + 副标题）
+const posterCaptionHeight = 48.0;
+
+/// 横幅卡文案区高度（内边距 8×2 + 标题文案块）
+const bannerCaptionHeight = posterCaptionHeight + 16;
+
+/// 竖版海报卡在给定宽度下的高度（2:3 封面 + 文案）
+double posterHeightFor(double width) => width * 3 / 2 + posterCaptionHeight;
+
+/// 横幅卡在给定宽度下的高度（16:9 横幅 + 文案）
+double bannerHeightFor(double width) => width * 9 / 16 + bannerCaptionHeight;
+
 /// 动漫卡片展示组件
 /// 默认为竖版海报卡（2:3 封面 + 评分 + 标题/副标题）
-/// 悬停时变形为横幅卡（16:9 bannerImage + 标签 + 操作按钮），并略微放大
+/// [expanded] 为 true 时展示横幅卡（16:9 bannerImage + 标签 + 操作按钮），尺寸由父级给定
 class AnimeWidget extends ConsumerStatefulWidget {
   /// 动漫数据对象
   final Anime anime;
@@ -34,11 +46,15 @@ class AnimeWidget extends ConsumerStatefulWidget {
   /// 动漫类型，用于生成唯一的 Hero 动画标签
   final AnimeType animeType;
 
+  /// 是否为展开态（横幅卡）。展开尺寸由父级布局决定
+  final bool expanded;
+
   const AnimeWidget({
     required this.anime,
     required this.animeViewModel,
     required this.onAnimeTap,
     required this.animeType,
+    this.expanded = false,
     super.key,
   });
 
@@ -50,15 +66,12 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
   /// 唯一的 Hero 动画标签，由动漫地址和类型组合生成
   late String uniqueHeroTag;
 
-  /// 是否处于悬停状态（变形为横幅卡）
-  bool hovered = false;
-
   @override
   void initState() {
     super.initState();
     // 根据动漫地址和类型生成唯一的 Hero 标签
     uniqueHeroTag = widget.anime.imageUrl + widget.animeType.name;
-    // 按需加载宽幅横幅（AniList，带缓存），供悬停态使用
+    // 按需加载宽幅横幅（AniList，带缓存），供展开态使用
     widget.animeViewModel.ensureExtras(widget.anime).then((_) {
       if (mounted) {
         setState(() {});
@@ -69,55 +82,42 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
   @override
   Widget build(BuildContext context) {
     final anime = widget.anime;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => hovered = true),
-      onExit: (_) => setState(() => hovered = false),
-      child: GestureDetector(
-        onTap: () {
-          // 设置当前的 Hero 标签，用于详情页动画
-          ref.read(heroTagProvider.notifier).state = uniqueHeroTag;
-          widget.onAnimeTap(anime.animeId);
-        },
-        child: Stack(
-          children: [
-            // 海报卡：始终参与布局（固定卡片尺寸与悬停区域），悬停时淡出
-            AnimatedOpacity(
-              opacity: hovered ? 0 : 1,
+    return GestureDetector(
+      onTap: () {
+        // 设置当前的 Hero 标签，用于详情页动画
+        ref.read(heroTagProvider.notifier).state = uniqueHeroTag;
+        widget.onAnimeTap(anime.animeId);
+      },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 海报卡：默认态，展开时淡出
+          AnimatedOpacity(
+            opacity: widget.expanded ? 0 : 1,
+            duration: morphDuration,
+            child: buildPosterCard(context, anime),
+          ),
+          // 横幅卡：展开时淡入，尺寸随父级 2 列宽等比放大
+          IgnorePointer(
+            ignoring: !widget.expanded,
+            child: AnimatedOpacity(
+              opacity: widget.expanded ? 1 : 0,
               duration: morphDuration,
-              child: buildPosterCard(context, anime),
+              child: buildBannerCard(context, anime),
             ),
-            // 横幅卡：悬停时淡入并放大，悬浮于海报卡位置
-            Positioned.fill(
-              child: IgnorePointer(
-                ignoring: !hovered,
-                child: Center(
-                  child: AnimatedScale(
-                    scale: hovered ? 1.08 : 1.0,
-                    duration: morphDuration,
-                    child: AnimatedOpacity(
-                      opacity: hovered ? 1 : 0,
-                      duration: morphDuration,
-                      child: buildBannerCard(context, anime),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   /// 竖版海报卡（默认态）：2:3 封面 + 评分角标 + 标题/副标题
+  /// 图片区用 Expanded 吃掉剩余高度，避免尺寸过渡时 Column 溢出
   Widget buildPosterCard(BuildContext context, Anime anime) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AspectRatio(
-          aspectRatio: 2 / 3,
+        Expanded(
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -142,31 +142,40 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
             ],
           ),
         ),
-        addVerticalSpace(8),
-        Text(
-          anime.title ?? '',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(fontWeight: FontWeight.w500),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        addVerticalSpace(2),
-        Text(
-          posterSubtitleOf(anime),
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: const Color(0xFF9CA3AF)),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        SizedBox(
+          height: posterCaptionHeight,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                anime.title ?? '',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w500),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              addVerticalSpace(2),
+              Text(
+                posterSubtitleOf(anime),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: const Color(0xFF9CA3AF)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  /// 横幅卡（悬停态）：16:9 横幅 + 评分/标签/操作按钮 + 标题/副标题
+  /// 横幅卡（展开态）：16:9 横幅 + 评分/标签/操作按钮 + 标题/副标题
+  /// 图片区用 Expanded 吃掉剩余高度，避免操作按钮随文案区一起把 Column 挤爆
   Widget buildBannerCard(BuildContext context, Anime anime) {
     return Container(
       decoration: BoxDecoration(
@@ -180,11 +189,9 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
+          Expanded(
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -219,30 +226,33 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
           ),
           Padding(
             padding: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  anime.title ?? '',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w500),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                addVerticalSpace(2),
-                Text(
-                  bannerSubtitleOf(anime),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: const Color(0xFF9CA3AF)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            child: SizedBox(
+              height: posterCaptionHeight,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    anime.title ?? '',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  addVerticalSpace(2),
+                  Text(
+                    bannerSubtitleOf(anime),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: const Color(0xFF9CA3AF)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
