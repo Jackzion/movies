@@ -200,7 +200,7 @@ class AnimeViewModel {
   Future<void> ensureExtras(Anime anime) async {
     if (anime.bannerImage == null) {
       final extras =
-          await _getExtras(anime.bangumiId, anime.titleJapanese, anime.title);
+          await getExtras(anime.bangumiId, anime.titleJapanese, anime.title);
       anime.bannerImage = extras.bannerImage;
     }
     if (anime.synopsis == null || anime.synopsis!.isEmpty) {
@@ -287,7 +287,7 @@ class AnimeViewModel {
       nameJa = details?.titleJapanese;
       nameCn = details?.title;
     }
-    final extras = await _getExtras(animeId, nameJa, nameCn);
+    final extras = await getExtras(animeId, nameJa, nameCn);
     final youtubeId = extras.youtubeId;
     if (youtubeId == null || youtubeId.isEmpty) {
       return [];
@@ -410,7 +410,7 @@ class AnimeViewModel {
 
   /// 获取 AniList 补充数据（横幅/PV），带内存与本地缓存
   /// Bangumi 与 AniList 无共享 ID，按日文原名（回退中文名）搜索匹配
-  Future<AnimeExtras> _getExtras(
+  Future<AnimeExtras> getExtras(
     int bangumiId,
     String? nameJa,
     String? nameCn,
