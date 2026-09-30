@@ -13,8 +13,8 @@ class Anime {
   /// 封面图地址
   final String image;
 
-  /// 简介
-  final String? synopsis;
+  /// 简介（放送日历数据为空时按需从条目详情补全）
+  String? synopsis;
 
   /// 首播日期
   final DateTime? aired;

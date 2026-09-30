@@ -191,15 +191,22 @@ class AnimeViewModel {
     return null;
   }
 
-  /// 确保动漫的 AniList 补充数据（横幅/PV）已加载
-  /// 按需请求 AniList 并持久化缓存，失败时横幅为空（UI 回退封面图）
+  /// 确保动漫的补充数据已加载
+  /// 横幅/PV 按需请求 AniList 并持久化缓存（失败时横幅为空，UI 回退封面图）
+  /// 简介在放送日历数据为空时从条目详情补全
   Future<void> ensureExtras(Anime anime) async {
-    if (anime.bannerImage != null) {
-      return;
+    if (anime.bannerImage == null) {
+      final extras =
+          await _getExtras(anime.bangumiId, anime.titleJapanese, anime.title);
+      anime.bannerImage = extras.bannerImage;
     }
-    final extras =
-        await _getExtras(anime.bangumiId, anime.titleJapanese, anime.title);
-    anime.bannerImage = extras.bannerImage;
+    if (anime.synopsis == null || anime.synopsis!.isEmpty) {
+      final details = await getAnimeDetails(anime.bangumiId);
+      final synopsis = details?.synopsis;
+      if (synopsis != null && synopsis.isNotEmpty) {
+        anime.synopsis = synopsis;
+      }
+    }
   }
 
   /// 创建收藏动漫流

@@ -54,16 +54,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               color: screenBackground,
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        'NOW PLAYING',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
-                  ),
                   HomeScreenImage(
                     animeViewModel: animeViewModel,
                     onAnimeTap: onAnimeTap,
