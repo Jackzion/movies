@@ -85,6 +85,7 @@ class AnimeDetails {
   String get displayTitle => title ?? titleJapanese ?? '';
 
   /// 从标签中提取类型（跳过年份、放送形式等元标签）
+  /// 保留更多标签与计数，供简介页标签区展示
   static List<Genre>? _parseGenres(List<dynamic>? tags) {
     if (tags == null || tags.isEmpty) {
       return null;
@@ -101,8 +102,14 @@ class AnimeDetails {
           RegExp(r'^\d').hasMatch(name)) {
         continue;
       }
-      genres.add(Genre(malId: genres.length + 1, name: name));
-      if (genres.length >= 6) {
+      genres.add(
+        Genre(
+          malId: genres.length + 1,
+          name: name,
+          count: _parseInt(tag['count']),
+        ),
+      );
+      if (genres.length >= 16) {
         break;
       }
     }

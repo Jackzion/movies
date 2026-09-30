@@ -91,6 +91,7 @@ void main() {
       expect(details.members, 35);
       expect(details.genres?.map((g) => g.name).toList(),
           ['奇幻', 'MADHouse', '旅行']);
+      expect(details.genres?.map((g) => g.count).toList(), [338, 232, 219]);
     });
   });
 
