@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,13 +12,16 @@ import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/utils.dart';
 
 /// 轮播图自动播放延迟时间（毫秒）
-const delayTime = 1000 * 10;
+const delayTime = 1000 * 5;
 
 /// 图片切换动画过渡时间（毫秒）
 const animationTime = 400;
 
-/// 横幅高度
-const heroHeight = 420.0;
+/// 封面海报宽度（2:3，完整展示不裁切）
+const heroPosterWidth = 214.0;
+
+/// 封面海报高度
+const heroPosterHeight = 320.0;
 
 /// 缩略图卡片宽度
 const thumbWidth = 200.0;
@@ -34,11 +39,11 @@ const thumbBorder = 3.0;
 const thumbGap = 16.0;
 
 /// 缩略图行内边距
-const thumbPadding = EdgeInsets.symmetric(horizontal: 40, vertical: 20);
+const thumbPadding = EdgeInsets.symmetric(horizontal: 24, vertical: 16);
 
 /// 首页轮播横幅组件
-/// 上方为自动轮播的横幅大图，下方为缩略图列表，点击缩略图切换横幅
-/// 播放按钮跳转详情页，收藏按钮更新收藏状态
+/// 横幅作为模糊背景，前景为完整封面海报与信息面板，缩略图轮播浮于背景之上
+/// 点击封面/播放按钮跳转详情页，收藏按钮更新收藏状态
 class HomeScreenImage extends ConsumerStatefulWidget {
   /// 动漫视图模型
   final AnimeViewModel animeViewModel;
@@ -88,111 +93,211 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
     }
     final currentAnime = animes[currentIndex];
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        buildHero(context, currentAnime),
-        buildThumbnailRow(context, animes),
-      ],
-    );
-  }
-
-  /// 横幅大图区域
-  /// 包含背景大图、底部渐变信息栏（播放按钮、标题、简介）和收藏按钮
-  Widget buildHero(BuildContext context, Anime anime) {
-    return SizedBox(
-      height: heroHeight,
-      width: double.infinity,
+    return Container(
+      margin: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Stack(
-        fit: StackFit.expand,
         children: [
-          // 背景大图（点击跳转详情页）
-          GestureDetector(
-            onTap: () => openDetail(anime),
-            child: Hero(
-              tag: '${anime.image}swiper',
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: animationTime),
-                child: CachedNetworkImage(
-                  key: ValueKey(anime.bannerImage ?? anime.image),
-                  imageUrl: anime.bannerImage ?? anime.image,
-                  fit: BoxFit.cover,
-                  height: heroHeight,
-                  width: double.infinity,
-                ),
-              ),
-            ),
-          ),
-          // 底部渐变信息栏
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54],
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-              child: Row(
-                children: [
-                  // 播放按钮
-                  GestureDetector(
-                    onTap: () => openDetail(anime),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: const BoxDecoration(
-                        color: Color(0x4DFFFFFF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                  addHorizontalSpace(16),
-                  // 标题和简介
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          anime.title ?? '',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        addVerticalSpace(4),
-                        Text(
-                          anime.synopsis ?? '',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: Colors.white70),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // 收藏按钮
-                  buildFavoriteButton(anime),
-                ],
-              ),
-            ),
+          // 背景：横幅（模糊），无横幅时用封面
+          Positioned.fill(child: buildBackground(currentAnime)),
+          // 渐变压暗层，保证前景可读
+          Positioned.fill(child: buildScrim()),
+          // 前景内容
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              buildHero(context, currentAnime),
+              buildThumbnailRow(context, animes),
+            ],
           ),
         ],
       ),
     );
   }
 
-  /// 收藏按钮
-  /// 点击切换收藏状态并更新收藏列表
+  /// 背景层：横幅大图模糊铺底（无横幅时回退封面）
+  Widget buildBackground(Anime anime) {
+    final url = anime.bannerImage ?? anime.image;
+    return Container(
+      color: Colors.black,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: animationTime),
+        child: ImageFiltered(
+          key: ValueKey(url),
+          imageFilter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 渐变压暗层
+  Widget buildScrim() {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x99000000), Color(0xE6000000)],
+        ),
+      ),
+    );
+  }
+
+  /// 前景主区：完整封面海报 + 信息面板
+  Widget buildHero(BuildContext context, Anime anime) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildPoster(anime),
+          addHorizontalSpace(24),
+          Expanded(child: buildInfoPanel(context, anime)),
+        ],
+      ),
+    );
+  }
+
+  /// 完整封面海报（点击跳转详情页，带 Hero 动画）
+  Widget buildPoster(Anime anime) {
+    return GestureDetector(
+      onTap: () => openDetail(anime),
+      child: Hero(
+        tag: '${anime.image}swiper',
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: animationTime),
+          child: ClipRRect(
+            key: ValueKey(anime.image),
+            borderRadius: BorderRadius.circular(12),
+            child: CachedNetworkImage(
+              imageUrl: anime.image,
+              fit: BoxFit.cover,
+              width: heroPosterWidth,
+              height: heroPosterHeight,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 信息背景板：标题、评分、简介、操作按钮
+  Widget buildInfoPanel(BuildContext context, Anime anime) {
+    return Container(
+      height: heroPosterHeight,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0x4D000000),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题
+          Text(
+            anime.title ?? '',
+            style: Theme.of(context).textTheme.headlineLarge,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          addVerticalSpace(8),
+          // 评分与元信息
+          buildMetaRow(context, anime),
+          addVerticalSpace(12),
+          // 简介
+          Expanded(
+            child: AutoSizeText(
+              anime.synopsis ?? '',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.white70),
+              maxLines: 6,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // 操作按钮
+          Row(
+            children: [
+              buildPlayButton(anime),
+              addHorizontalSpace(16),
+              buildFavoriteButton(anime),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 评分与元信息行
+  Widget buildMetaRow(BuildContext context, Anime anime) {
+    final meta = <String>[
+      if (anime.aired != null) '${anime.aired!.year}',
+      if (anime.type != null && anime.type!.isNotEmpty) anime.type!,
+      if (anime.rank != null) '排行 #${anime.rank}',
+    ];
+    return Row(
+      children: [
+        if (anime.score != null) ...[
+          const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 20),
+          addHorizontalSpace(4),
+          Text(
+            anime.score!.toStringAsFixed(1),
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: const Color(0xFFFFC107)),
+          ),
+        ],
+        if (meta.isNotEmpty) ...[
+          addHorizontalSpace(12),
+          Flexible(
+            child: Text(
+              meta.join(' · '),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.white70),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// 播放按钮（点击跳转详情页）
+  Widget buildPlayButton(Anime anime) {
+    return GestureDetector(
+      onTap: () => openDetail(anime),
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.play_arrow_rounded,
+          color: Color(0xFF333333),
+          size: 30,
+        ),
+      ),
+    );
+  }
+
+  /// 收藏按钮（点击切换收藏状态并更新收藏列表）
   Widget buildFavoriteButton(Anime anime) {
     final favoriteSelected = isFavorite(anime);
     return GestureDetector(
@@ -200,26 +305,21 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
       child: Container(
         width: 48,
         height: 48,
-        decoration: BoxDecoration(
-          color: const Color(0x4D000000),
+        decoration: const BoxDecoration(
+          color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(
-            color: favoriteSelected
-                ? const Color(0xFFFF4757)
-                : const Color(0x80FFFFFF),
-            width: 2,
-          ),
         ),
         child: Icon(
           favoriteSelected ? Icons.favorite : Icons.favorite_border,
-          color: favoriteSelected ? const Color(0xFFFF4757) : Colors.white,
+          color:
+              favoriteSelected ? const Color(0xFFFF4757) : const Color(0xFF333333),
           size: 24,
         ),
       ),
     );
   }
 
-  /// 缩略图列表区域
+  /// 缩略图轮播区域（浮于背景之上）
   Widget buildThumbnailRow(BuildContext context, List<Anime> animes) {
     return SizedBox(
       height: thumbPadding.vertical +
@@ -306,7 +406,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
     loadExtras();
   }
 
-  /// 加载当前动漫的 AniList 补充数据（宽幅横幅），完成后刷新界面
+  /// 加载当前动漫的补充数据（宽幅横幅/简介），完成后刷新界面
   void loadExtras() {
     final animes = widget.animeViewModel.nowPlayingAnimes;
     if (animes.isEmpty) {
