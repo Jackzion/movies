@@ -51,7 +51,8 @@ class BangumiApiService {
       'type': [2],
     };
     if (tags != null && tags.isNotEmpty) {
-      filter['tags'] = tags;
+      // Bangumi 过滤字段为单数 tag；复数 tags 会被忽略
+      filter['tag'] = tags;
     }
     if (rankFilter != null && rankFilter.isNotEmpty) {
       filter['rank'] = rankFilter;

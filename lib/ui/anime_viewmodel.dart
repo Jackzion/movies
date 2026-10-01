@@ -318,11 +318,12 @@ class AnimeViewModel {
   }
 
   /// 搜索动漫
-  Future<List<Anime>?> searchAnimes(String query, int page) async {
+  Future<List<Anime>?> searchAnimes(String query, int page , List<String>? tags)  async {
     try {
       final response = await bangumiApiService.searchSubjects(
         keyword: query,
         limit: 10,
+        tags: tags,
         offset: (page - 1) * 10,
       );
       if (response.statusCode == 200) {

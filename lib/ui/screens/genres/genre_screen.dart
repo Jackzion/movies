@@ -1,5 +1,4 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/data/models/anime.dart';
@@ -37,6 +36,9 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   List<Anime> currentAnimeList = [];
   Sorting selectedSort = Sorting.aToz;
 
+  /// 类型列表是否已初始化（避免每次 build 清空重建）
+  bool _genreStateReady = false;
+
   @override
   Widget build(BuildContext context) {
     final animeViewModelAsync = ref.watch(animeViewModelProvider);
@@ -45,47 +47,57 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
       loading: () => const NotReady(),
       data: (viewModel) {
         animeViewModel = viewModel;
-        buildGenreState();
+        ensureGenreState();
         return buildScreen();
       },
     );
   }
 
-  /// 构建动漫类型状态列表
-  void buildGenreState() {
-    genreStates.clear();
-    for (final genre in animeViewModel.animeGenres!) {
-      genreStates.add(GenreState(genre: genre, isSelected: false));
+  /// 仅在首次拿到类型数据时初始化，后续 rebuild 不再 clear
+  void ensureGenreState() {
+    if (_genreStateReady) {
+      return;
     }
-    // 从本地存储加载已选中的类型
-    getSelectedGenres();
+    final genres = animeViewModel.animeGenres;
+    if (genres == null || genres.isEmpty) {
+      return;
+    }
+    genreStates = [
+      for (final genre in genres)
+        GenreState(genre: genre, isSelected: false),
+    ];
+    _genreStateReady = true;
+    // 异步恢复本地选中项
+    restoreSelectedGenres();
   }
 
-  /// 从本地存储加载已选中的类型
-  void getSelectedGenres() async {
+  /// 从本地存储恢复选中状态（只改 isSelected，不重建列表）
+  Future<void> restoreSelectedGenres() async {
     final prefs = await ref.read(prefsProvider.future);
-    final genreNameList = prefs.getString(genreStringKey)?.split(',');
-    if (genreNameList?.isNotEmpty == true) {
-      for (final genreName in genreNameList!) {
-        var genreState = genreStates.firstWhereOrNull(
-          (genre) => genre.genre.name == genreName,
-        );
-        if (genreState != null) {
-          final index = genreStates.indexOf(genreState);
-          genreState = genreState.copyWith(isSelected: true);
-          genreStates[index] = genreState;
-        }
-      }
+    final raw = prefs.getString(genreStringKey);
+    if (raw == null || raw.isEmpty) {
+      return;
     }
+    final selectedNames = raw.split(',').where((s) => s.isNotEmpty).toSet();
+    if (!mounted || selectedNames.isEmpty) {
+      return;
+    }
+    setState(() {
+      genreStates = [
+        for (final state in genreStates)
+          state.copyWith(isSelected: selectedNames.contains(state.genre.name)),
+      ];
+    });
   }
 
-  /// 保存选中的类型到本地存储
-  void saveSelectedGenres() async {
+  /// 仅保存已选中的类型名
+  Future<void> saveSelectedGenres() async {
     final prefs = await ref.read(prefsProvider.future);
-    final genreNameList = genreStates
+    final selectedNames = genreStates
+        .where((state) => state.isSelected)
         .map((state) => state.genre.name)
         .toList();
-    prefs.setString(genreStringKey, genreNameList.join(','));
+    prefs.setString(genreStringKey, selectedNames.join(','));
   }
 
   Widget buildScreen() {
@@ -110,6 +122,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                         GenreSearchRow((searchString) {
                           currentSearchString = searchString;
                           FocusScope.of(context).unfocus();
+                          // 只收起类型区，不清空类型数据
                           expandedNotifier.value = false;
                           search();
                         }),
@@ -125,8 +138,9 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                         onGenresExpanded: (expanded) {
                           expandedNotifier.value = expanded;
                         },
-                        onGenresSelected: (genres) {
-                          genreStates = genres;
+                        onGenresSelected: (fullList) {
+                          // 保持全量列表，只同步选中状态
+                          genreStates = fullList;
                           saveSelectedGenres();
                         },
                       );
@@ -157,11 +171,22 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   void search() async {
-    // 先搜索动漫
-    final animeList = await animeViewModel.searchAnimes(currentSearchString,1);
+    final selectedTags = genreStates
+        .where((state) => state.isSelected)
+        .map((state) => state.genre.name)
+        .toList();
+    final animeList = await animeViewModel.searchAnimes(
+      currentSearchString,
+      1,
+      selectedTags.isEmpty ? null : selectedTags,
+    );
+    if (!mounted) {
+      return;
+    }
     setState(() {
       currentAnimeList = animeList ?? [];
-         }); 
+      expandedNotifier.value = true;
+    });
   }
 }
 

@@ -77,19 +77,12 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
                   child: widget.isExpanded
                       ? Padding(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.all(0.0),
-                            itemCount: genreChips.length,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 0,
-                              childAspectRatio: 2.2,
-                              mainAxisSpacing: 0,
-                            ),
-                            itemBuilder: (BuildContext context, int index) {
-                              return genreChips[index];
-                            },
+                          // 流式排列：只保留间距，不按行列对齐
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.start,
+                            children: genreChips,
                           ),
                         )
                       : const SizedBox(width: double.infinity, height: 0),
@@ -116,9 +109,10 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
         onSelected: (selected) {
           setState(() {
             widget.genreStates[index] = genreState.copyWith(
-              isSelected: !genreState.isSelected,
+              isSelected: selected,
             );
-            widget.onGenresSelected(getSelectedGenres());
+            // 回传全量列表，父组件只同步选中态，不覆盖为「仅已选」
+            widget.onGenresSelected(List<GenreState>.from(widget.genreStates));
           });
         },
       );

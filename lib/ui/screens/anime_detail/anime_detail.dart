@@ -252,6 +252,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
     ]);
     videos = results[0] as List<AnimeVideo>;
     characters = results[1] as List<AnimeCharacter>;
+    // 从 extras 中获取 bannerImage（可能为空）
     bannerImage = (results[2] as AnimeExtras).bannerImage;
   }
 }
