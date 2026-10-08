@@ -1,16 +1,20 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:lumberdash/lumberdash.dart';
+import 'package:movies/data/database/models/database_interface.dart';
+import 'package:movies/data/database/models/database_models.dart';
 import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_extras.dart';
+import 'package:movies/data/models/anime_image_configuration.dart';
 import 'package:movies/data/models/anime_video.dart';
-import 'package:movies/data/models/favorite.dart';
 import 'package:movies/data/models/genre.dart';
 import 'package:movies/network/anilist_api_service.dart';
 import 'package:movies/network/bangumi_api_service.dart';
 import 'package:movies/utils/prefs.dart';
+import 'package:movies/utils/utils.dart';
 
 /// 动漫视图模型
 /// 负责管理动漫数据的加载和分类
@@ -28,6 +32,9 @@ class AnimeViewModel {
   /// 本地存储（用于缓存 AniList 补充数据）
   final Prefs prefs;
 
+  /// 数据库（收藏 / 标签 / 图片配置）
+  final IDatabase database;
+
   /// 动漫标签列表（分类页）
   List<Genre>? animeGenres;
 
@@ -43,12 +50,6 @@ class AnimeViewModel {
   /// 本季放送动漫列表（放送日历）
   List<Anime> nowPlayingAnimes = [];
 
-  /// 收藏动漫流
-  Stream<List<Favorite>>? favoriteStream;
-
-  /// 收藏动漫列表
-  List<Favorite>? favoriteList;
-
   /// AniList 补充数据缓存（bangumiId → extras）
   final Map<int, AnimeExtras> extrasCache = {};
 
@@ -58,22 +59,99 @@ class AnimeViewModel {
   /// 补充数据缓存是否已从本地加载
   bool _extrasLoaded = false;
 
+  /// 图片配置（CDN 主机 + 尺寸键 + 缩放宽度），落库缓存
+  AnimeImageConfiguration imageConfiguration =
+      AnimeImageConfiguration.builtIn;
+
   /// 构造函数
   AnimeViewModel({
     required this.bangumiApiService,
     required this.aniListApiService,
     required this.prefs,
+    required this.database,
   });
 
   /// 初始化视图模型
   Future<void> setup() async {
+    await setupImageConfiguration();
     await setupGenres();
+    await _reloadFavorites();
     _loadExtrasCache();
   }
 
+  /// 收藏内存缓存（供同步 isFavorite 使用）
+  List<DBFavorite> _favorites = [];
+
+  Future<void> _reloadFavorites() async {
+    _favorites = await database.getFavorites();
+  }
+
+  /// 加载/缓存图片配置
+  /// 无独立 configuration 接口：优先读库，缺失时写入内置约定
+  Future<void> setupImageConfiguration() async {
+    final cached = await database.getAnimeImageConfiguration();
+    if (cached != null) {
+      imageConfiguration = cached.configuration;
+      return;
+    }
+    imageConfiguration = AnimeImageConfiguration.builtIn;
+    await database.saveAnimeImageConfiguration(
+      DBAnimeImageConfiguration(
+        id: 1,
+        configuration: imageConfiguration,
+      ),
+    );
+  }
+
+  /// 用线上 images 对象补充未知尺寸键，并落库
+  Future<void> absorbImageSizes(Map<String, dynamic>? images) async {
+    if (images == null || images.isEmpty) return;
+    final known = imageConfiguration.bangumiSizes.toSet();
+    final discovered = images.keys
+        .where((k) => images[k] is String && (images[k] as String).isNotEmpty)
+        .toList();
+    final merged = [...imageConfiguration.bangumiSizes];
+    for (final key in discovered) {
+      if (!known.contains(key)) merged.add(key);
+    }
+    if (merged.length == imageConfiguration.bangumiSizes.length) return;
+    imageConfiguration = AnimeImageConfiguration(
+      bangumiHost: imageConfiguration.bangumiHost,
+      anilistHost: imageConfiguration.anilistHost,
+      bangumiSizes: merged,
+      bangumiPathSizes: imageConfiguration.bangumiPathSizes,
+      bangumiResizeWidths: imageConfiguration.bangumiResizeWidths,
+      anilistCoverSizes: imageConfiguration.anilistCoverSizes,
+      anilistCharacterSizes: imageConfiguration.anilistCharacterSizes,
+    );
+    await database.saveAnimeImageConfiguration(
+      DBAnimeImageConfiguration(
+        id: 1,
+        configuration: imageConfiguration,
+      ),
+    );
+  }
+
+  /// 按尺寸取图（配置驱动，替代硬编码 size）
+  String? getImageUrl(ImageSize size, Map<String, dynamic>? images) {
+    return getSizedImageUrl(size, imageConfiguration, images);
+  }
+
+  /// 对已有 URL 改写尺寸
+  String? getResizedUrl(ImageSize size, String? url) {
+    return resizeBangumiUrl(size, imageConfiguration, url);
+  }
+
   /// 加载动漫标签列表
-  /// Bangumi 无独立标签接口，使用常用动画标签
+  /// 优先读库；空库时写入常用标签（Bangumi 无独立标签列表接口）
   Future<void> setupGenres() async {
+    final stored = await database.getGenres();
+    if (stored.isNotEmpty) {
+      animeGenres = [
+        for (final g in stored) Genre(malId: g.remoteId, name: g.name),
+      ];
+      return;
+    }
     const tagNames = [
       '科幻', '奇幻', '恋爱', '百合', '治愈', '悬疑', '推理', '机战',
       '校园', '音乐', '日常', '搞笑', '动作', '冒险', '魔法', '青春',
@@ -83,6 +161,10 @@ class AnimeViewModel {
       for (var i = 0; i < tagNames.length; i++)
         Genre(malId: i + 1, name: tagNames[i]),
     ];
+    await database.saveGenres([
+      for (var i = 0; i < tagNames.length; i++)
+        DBAnimeGenre(id: i + 1, remoteId: i + 1, name: tagNames[i]),
+    ]);
   }
 
   /// 获取热门动漫列表（全站热度）
@@ -212,52 +294,73 @@ class AnimeViewModel {
     }
   }
 
-  /// 创建收藏动漫流
-  Stream<List<Favorite>> streamFavorites() {
-    favoriteList ??= [];
-    favoriteStream = Stream.value(favoriteList!);
-    return favoriteStream!;
+  /// 收藏列表流（来自数据库）
+  Stream<List<DBFavorite>> streamFavorites() {
+    return database.streamFavorites();
   }
 
-  /// 更新收藏动漫状态，不存在时新增
-  void updateFavorite(Favorite favorite) {
-    favoriteList ??= [];
-    final index = favoriteList!
-        .indexWhere((favItem) => favItem.animeId == favorite.animeId);
-    if (index != -1) {
-      favoriteList![index] = favorite;
-    } else {
-      favoriteList!.add(favorite);
-    }
+  /// 读取全部收藏
+  Future<List<DBFavorite>> getFavorites() async {
+    return database.getFavorites();
   }
 
-  /// 判断动漫是否已收藏
-  bool isFavorite(Anime anime) {
-    final favorites = favoriteList;
-    if (favorites == null) {
-      return false;
-    }
-    return favorites.any((fav) => fav.animeId == anime.animeId && fav.favorite);
-  }
-
-  /// 切换动漫收藏状态（不存在时新增收藏）
-  void toggleFavorite(Anime anime) {
-    favoriteList ??= [];
-    final index = favoriteList!.indexWhere((fav) => fav.animeId == anime.animeId);
-    if (index != -1) {
-      favoriteList![index].favorite = !favoriteList![index].favorite;
-      updateFavorite(favoriteList![index]);
-    } else {
-      updateFavorite(Favorite(
-        animeId: anime.animeId,
-        image: anime.image,
+  /// 保存收藏（全量字段，重启后无需再请求）
+  Future saveFavorite(AnimeDetails details) async {
+    await database.saveFavorite(
+      DBFavorite(
+        id: details.bangumiId,
+        animeId: details.bangumiId,
+        posterPath: details.image,
         favorite: true,
-        title: anime.title ?? '',
-        overview: anime.synopsis ?? '',
-        popularity: anime.score ?? 0,
-        releaseDate: anime.aired ?? DateTime.now(),
-      ));
+        popularity: details.score ?? 0,
+        releaseDate: DateTime(details.year ?? DateTime.now().year),
+        title: details.displayTitle,
+        overview: details.synopsis ?? '',
+      ),
+    );
+    await _reloadFavorites();
+  }
+
+  /// 按行 ID 移除收藏
+  Future<bool> removeFavorite(int id) async {
+    final ok = await database.removeFavorite(id);
+    await _reloadFavorites();
+    return ok;
+  }
+
+  /// 判断动漫是否已收藏（读内存缓存，setup/收藏变更后刷新）
+  bool isFavorite(Anime anime) {
+    return _favorites
+        .any((fav) => fav.animeId == anime.animeId && fav.favorite);
+  }
+
+  /// 切换动漫收藏状态
+  Future toggleFavorite(Anime anime) async {
+    final index =
+        _favorites.indexWhere((fav) => fav.animeId == anime.animeId);
+    if (index != -1) {
+      await database.removeFavorite(_favorites[index].id);
+      await _reloadFavorites();
+      return;
     }
+    final details = await getAnimeDetails(anime.bangumiId);
+    if (details != null) {
+      await saveFavorite(details);
+    } else {
+      await database.saveFavorite(
+        DBFavorite(
+          id: anime.animeId,
+          animeId: anime.animeId,
+          posterPath: anime.image,
+          favorite: true,
+          popularity: anime.score ?? 0,
+          releaseDate: anime.aired ?? DateTime.now(),
+          title: anime.title ?? '',
+          overview: anime.synopsis ?? '',
+        ),
+      );
+    }
+    await _reloadFavorites();
   }
 
   /// 获取动漫详情
@@ -374,10 +477,12 @@ class AnimeViewModel {
     if (items is! List<dynamic>) {
       return [];
     }
-    return items
-        .whereType<Map<String, dynamic>>()
-        .map(Anime.fromBangumi)
-        .toList();
+    final rows = items.whereType<Map<String, dynamic>>().toList();
+    // 用首个条目的 images 学习/校验尺寸键（无 configuration 接口时的约定来源）
+    if (rows.isNotEmpty) {
+      unawaited(absorbImageSizes(rows.first['images'] as Map<String, dynamic>?));
+    }
+    return rows.map(Anime.fromBangumi).toList();
   }
 
   /// 提取条目的在看人数（日历排序用）

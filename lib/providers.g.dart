@@ -254,6 +254,49 @@ final class PrefsProvider
 
 String _$prefsHash() => r'286d5a6891847e65488b246f20ce8495331773ef';
 
+/// Drift 数据库提供者
+
+@ProviderFor(driftDatabase)
+final driftDatabaseProvider = DriftDatabaseProvider._();
+
+/// Drift 数据库提供者
+
+final class DriftDatabaseProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<IDatabase>,
+          IDatabase,
+          FutureOr<IDatabase>
+        >
+    with $FutureModifier<IDatabase>, $FutureProvider<IDatabase> {
+  /// Drift 数据库提供者
+  DriftDatabaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'driftDatabaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$driftDatabaseHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<IDatabase> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<IDatabase> create(Ref ref) {
+    return driftDatabase(ref);
+  }
+}
+
+String _$driftDatabaseHash() => r'a04bf503f28f04c19d640b75ca4b9c42b7d25807';
+
 /// 动漫视图模型提供者
 /// 异步加载，等待 setup 完成后返回 AnimeViewModel
 
@@ -299,4 +342,4 @@ final class AnimeViewModelProvider
   }
 }
 
-String _$animeViewModelHash() => r'05cd2534a29b8f3ad84a3f20dd2b173476f5bcf1';
+String _$animeViewModelHash() => r'fa2aa819a77ba564ee66efbaa2aef9de2757fffe';

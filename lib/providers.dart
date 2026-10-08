@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:movies/data/database/drift/drift_database.dart';
+import 'package:movies/data/database/models/database_interface.dart';
 import 'package:movies/network/anilist_api_service.dart';
 import 'package:movies/network/bangumi_api_service.dart';
 import 'package:movies/router/app_routes.dart';
@@ -35,6 +37,12 @@ Future<Prefs> prefs(Ref ref) async {
   return Prefs(sharedPrefs);
 }
 
+/// Drift 数据库提供者
+@Riverpod(keepAlive: true)
+Future<IDatabase> driftDatabase(Ref ref) async {
+  return DriftDatabase();
+}
+
 /// 动漫视图模型提供者
 /// 异步加载，等待 setup 完成后返回 AnimeViewModel
 @Riverpod(keepAlive: true)
@@ -43,6 +51,7 @@ Future<AnimeViewModel> animeViewModel(Ref ref) async {
     bangumiApiService: ref.read(bangumiApiServiceProvider),
     aniListApiService: ref.read(anilistApiServiceProvider),
     prefs: await ref.read(prefsProvider.future),
+    database: await ref.read(driftDatabaseProvider.future),
   );
   await model.setup();
   return model;
