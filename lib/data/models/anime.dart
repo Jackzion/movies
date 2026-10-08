@@ -1,3 +1,5 @@
+import 'package:movies/data/models/anime_image_configuration.dart';
+
 /// 动漫数据模型
 /// 数据来源：Bangumi 条目（搜索/日历），横幅与 PV 由 AniList 按需补充
 class Anime {
@@ -58,7 +60,7 @@ class Anime {
       bangumiId: json['id'] as int? ?? 0,
       title: (nameCn != null && nameCn.isNotEmpty) ? nameCn : name,
       titleJapanese: name,
-      image: images?['large'] as String? ?? images?['medium'] as String? ?? '',
+      image: AnimeImageConfiguration.builtIn.pick(images),
       synopsis: json['summary'] as String?,
       aired: _parseDate(
         json['date'] as String? ?? json['air_date'] as String?,

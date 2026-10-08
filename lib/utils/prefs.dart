@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:movies/data/models/anime_image_configuration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 本地存储工具类
@@ -71,5 +74,27 @@ class Prefs {
   /// 检查是否包含指定键
   bool containsKey(String key) {
     return preferences.containsKey(key);
+  }
+
+  // 图片配置（对标 TMDB configuration，本地缓存）
+
+  static const String _imageConfigKey = 'anime_image_configuration';
+
+  /// 保存动漫图片配置
+  Future<void> setImageConfiguration(AnimeImageConfiguration config) {
+    return preferences.setString(_imageConfigKey, jsonEncode(config.toJson()));
+  }
+
+  /// 读取动漫图片配置，未缓存时返回 null
+  AnimeImageConfiguration? getImageConfiguration() {
+    final raw = preferences.getString(_imageConfigKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return AnimeImageConfiguration.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 }

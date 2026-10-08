@@ -1,3 +1,5 @@
+import 'package:movies/data/models/anime_image_configuration.dart';
+
 /// 动漫角色数据模型
 /// 数据来源：Bangumi 条目角色（含 CV 声优）
 class AnimeCharacter {
@@ -23,7 +25,7 @@ class AnimeCharacter {
       character: Character(
         bangumiId: json['id'] as int?,
         name: json['name'] as String?,
-        image: images?['large'] as String? ?? images?['medium'] as String?,
+        image: AnimeImageConfiguration.builtIn.pick(images),
       ),
       role: json['relation'] as String?,
       voiceActors: (json['actors'] as List<dynamic>?)
@@ -72,7 +74,7 @@ class VoiceActor {
     return VoiceActor(
       bangumiId: json['id'] as int?,
       name: json['name'] as String?,
-      image: images?['large'] as String? ?? images?['medium'] as String?,
+      image: AnimeImageConfiguration.builtIn.pick(images),
       language: '日语',
     );
   }
