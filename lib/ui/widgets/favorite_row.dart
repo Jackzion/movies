@@ -25,10 +25,7 @@ class FavoriteRow extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final textWidth = screenWidth - 132;
 
-    final imageUrl = animeViewModel.getResizedUrl(
-      ImageSize.small,
-      favorite.posterPath,
-    );
+    final imageUrl = favorite.posterPath;
 
     return GestureDetector(
       onTap: () => onAnimeTap(favorite.animeId),
@@ -41,7 +38,7 @@ class FavoriteRow extends StatelessWidget {
             SizedBox(
               height: 140,
               width: 100,
-              child: imageUrl != null
+              child: imageUrl.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: imageUrl,
                       alignment: Alignment.topCenter,

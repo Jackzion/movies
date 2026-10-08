@@ -8,13 +8,11 @@ import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_extras.dart';
-import 'package:movies/data/models/anime_image_configuration.dart';
 import 'package:movies/data/models/anime_video.dart';
 import 'package:movies/data/models/genre.dart';
 import 'package:movies/network/anilist_api_service.dart';
 import 'package:movies/network/bangumi_api_service.dart';
 import 'package:movies/utils/prefs.dart';
-import 'package:movies/utils/utils.dart';
 
 /// 动漫视图模型
 /// 负责管理动漫数据的加载和分类
@@ -59,10 +57,6 @@ class AnimeViewModel {
   /// 补充数据缓存是否已从本地加载
   bool _extrasLoaded = false;
 
-  /// 图片配置（CDN 主机 + 尺寸键 + 缩放宽度），落库缓存
-  AnimeImageConfiguration imageConfiguration =
-      AnimeImageConfiguration.builtIn;
-
   /// 构造函数
   AnimeViewModel({
     required this.bangumiApiService,
@@ -73,7 +67,6 @@ class AnimeViewModel {
 
   /// 初始化视图模型
   Future<void> setup() async {
-    await setupImageConfiguration();
     await setupGenres();
     await _reloadFavorites();
     _loadExtrasCache();
@@ -84,62 +77,6 @@ class AnimeViewModel {
 
   Future<void> _reloadFavorites() async {
     _favorites = await database.getFavorites();
-  }
-
-  /// 加载/缓存图片配置
-  /// 无独立 configuration 接口：优先读库，缺失时写入内置约定
-  Future<void> setupImageConfiguration() async {
-    final cached = await database.getAnimeImageConfiguration();
-    if (cached != null) {
-      imageConfiguration = cached.configuration;
-      return;
-    }
-    imageConfiguration = AnimeImageConfiguration.builtIn;
-    await database.saveAnimeImageConfiguration(
-      DBAnimeImageConfiguration(
-        id: 1,
-        configuration: imageConfiguration,
-      ),
-    );
-  }
-
-  /// 用线上 images 对象补充未知尺寸键，并落库
-  Future<void> absorbImageSizes(Map<String, dynamic>? images) async {
-    if (images == null || images.isEmpty) return;
-    final known = imageConfiguration.bangumiSizes.toSet();
-    final discovered = images.keys
-        .where((k) => images[k] is String && (images[k] as String).isNotEmpty)
-        .toList();
-    final merged = [...imageConfiguration.bangumiSizes];
-    for (final key in discovered) {
-      if (!known.contains(key)) merged.add(key);
-    }
-    if (merged.length == imageConfiguration.bangumiSizes.length) return;
-    imageConfiguration = AnimeImageConfiguration(
-      bangumiHost: imageConfiguration.bangumiHost,
-      anilistHost: imageConfiguration.anilistHost,
-      bangumiSizes: merged,
-      bangumiPathSizes: imageConfiguration.bangumiPathSizes,
-      bangumiResizeWidths: imageConfiguration.bangumiResizeWidths,
-      anilistCoverSizes: imageConfiguration.anilistCoverSizes,
-      anilistCharacterSizes: imageConfiguration.anilistCharacterSizes,
-    );
-    await database.saveAnimeImageConfiguration(
-      DBAnimeImageConfiguration(
-        id: 1,
-        configuration: imageConfiguration,
-      ),
-    );
-  }
-
-  /// 按尺寸取图（配置驱动，替代硬编码 size）
-  String? getImageUrl(ImageSize size, Map<String, dynamic>? images) {
-    return getSizedImageUrl(size, imageConfiguration, images);
-  }
-
-  /// 对已有 URL 改写尺寸
-  String? getResizedUrl(ImageSize size, String? url) {
-    return resizeBangumiUrl(size, imageConfiguration, url);
   }
 
   /// 加载动漫标签列表
@@ -477,12 +414,10 @@ class AnimeViewModel {
     if (items is! List<dynamic>) {
       return [];
     }
-    final rows = items.whereType<Map<String, dynamic>>().toList();
-    // 用首个条目的 images 学习/校验尺寸键（无 configuration 接口时的约定来源）
-    if (rows.isNotEmpty) {
-      unawaited(absorbImageSizes(rows.first['images'] as Map<String, dynamic>?));
-    }
-    return rows.map(Anime.fromBangumi).toList();
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(Anime.fromBangumi)
+        .toList();
   }
 
   /// 提取条目的在看人数（日历排序用）

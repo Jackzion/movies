@@ -1,4 +1,3 @@
-import 'package:movies/data/models/anime_image_configuration.dart';
 import 'package:movies/data/models/genre.dart';
 
 /// 动漫详情数据模型
@@ -67,7 +66,7 @@ class AnimeDetails {
       bangumiId: json['id'] as int? ?? 0,
       title: (nameCn != null && nameCn.isNotEmpty) ? nameCn : name,
       titleJapanese: name,
-      image: AnimeImageConfiguration.builtIn.pick(images),
+      image: images?['large'] as String? ?? images?['medium'] as String? ?? '',
       type: json['platform'] as String?,
       episodes: _parseInt(json['eps'] ?? json['total_episodes']),
       score: _parseDouble(rating?['score']),

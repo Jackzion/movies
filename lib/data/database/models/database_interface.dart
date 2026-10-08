@@ -9,12 +9,6 @@ abstract class IDatabase {
 
   Future saveGenres(List<DBAnimeGenre> genres);
 
-  Future<DBAnimeImageConfiguration?> getAnimeImageConfiguration();
-
-  Future<DBAnimeImageConfiguration?> getAnimeImageConfigurationById(int id);
-
-  Future saveAnimeImageConfiguration(DBAnimeImageConfiguration configuration);
-
   Future saveFavorite(DBFavorite favorite);
 
   Future<bool> removeFavorite(int id);
