@@ -31,15 +31,21 @@ class HorizontalCast extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: SizedBox(
-              width: 80,
+              width: 110,
               child: Column(
                 children: [
                   SizedBox(
-                    width: 70,
-                    height: 70,
+                    width: 80,
+                    height: 80,
                     child: imageUrl.isNotEmpty
-                        ? CircleAvatar(
-                            backgroundImage: CachedNetworkImageProvider(imageUrl),
+                        ? ClipOval(
+                            child: Image(
+                              image: CachedNetworkImageProvider(imageUrl),
+                              width: 140,
+                              height: 140,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
+                            ),
                           )
                         : const CircleAvatar(
                             child: Icon(Icons.person),
