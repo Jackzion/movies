@@ -340,7 +340,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
 
   /// 操作按钮：收藏 + 播放
   Widget buildActions(BuildContext context, Anime anime) {
-    final favoriteSelected = widget.animeViewModel.isFavorite(anime);
+    final favoriteSelected = widget.animeViewModel.isFavorite(anime.animeId);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

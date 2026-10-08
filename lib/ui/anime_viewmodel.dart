@@ -266,20 +266,23 @@ class AnimeViewModel {
   }
 
   /// 判断动漫是否已收藏（读内存缓存，setup/收藏变更后刷新）
-  bool isFavorite(Anime anime) {
+  bool isFavorite(int animeId) {
     return _favorites
-        .any((fav) => fav.animeId == anime.animeId && fav.favorite);
+        .any((fav) => fav.animeId == animeId && fav.favorite);
   }
 
   /// 切换动漫收藏状态
   Future toggleFavorite(Anime anime) async {
+    // 先从内存缓存中查找是否已收藏
     final index =
         _favorites.indexWhere((fav) => fav.animeId == anime.animeId);
+    // 如果已收藏，移除, 并刷新内存缓存
     if (index != -1) {
       await database.removeFavorite(_favorites[index].id);
       await _reloadFavorites();
       return;
     }
+    // 如果未收藏，添加, 并刷新内存缓存
     final details = await getAnimeDetails(anime.bangumiId);
     if (details != null) {
       await saveFavorite(details);
