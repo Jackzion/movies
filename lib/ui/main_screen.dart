@@ -9,8 +9,10 @@ import 'package:movies/ui/screens/genres/genre_screen.dart';
 import 'package:movies/ui/screens/home/home_screen.dart';
 import 'package:movies/ui/theme/theme.dart';
 
-/// 主框架：自适应导航
-/// 小屏用底部 NavigationBar，大屏用左侧 NavigationRail
+/// 主框架：AdaptiveLayout 三槽位
+/// primaryNavigation — 中大屏左侧 NavigationRail
+/// body — 当前页面
+/// bottomNavigation — 小屏底部导航
 @RoutePage(name: 'MainRoute')
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -27,25 +29,77 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     FavoriteScreen(),
   ];
 
+  static const _navDestinations = <NavigationDestination>[
+    NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+    NavigationDestination(icon: Icon(Symbols.genres), label: 'Genre'),
+    NavigationDestination(icon: Icon(Icons.favorite), label: 'Favorites'),
+  ];
+
+  static const _railDestinations = <NavigationRailDestination>[
+    NavigationRailDestination(icon: Icon(Icons.home), label: Text('Home')),
+    NavigationRailDestination(icon: Icon(Symbols.genres), label: Text('Genre')),
+    NavigationRailDestination(
+      icon: Icon(Icons.favorite),
+      label: Text('Favorites'),
+    ),
+  ];
+
+  void _onNavSelected(int navIndex) {
+    ref.read(currentNavIndexProvider.notifier).state = navIndex;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final index = ref.watch(currentNavIndexProvider);
+    // 当前导航下标
+    final currentIndex = ref.watch(currentNavIndexProvider);
     return Scaffold(
       backgroundColor: screenBackground,
-      body: AdaptiveScaffold(
-        selectedIndex: index,
-        onSelectedIndexChange: (navIndex) {
-          ref.read(currentNavIndexProvider.notifier).state = navIndex;
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Symbols.genres), label: 'Genre'),
-          NavigationDestination(icon: Icon(Icons.favorite), label: 'Favorites'),
-        ],
-        // 小屏正文（底部导航）
-        smallBody: (_) => _screens[index],
-        // 中大屏正文（左侧 NavigationRail）
-        body: (_) => _screens[index],
+      body: AdaptiveLayout(
+        // 左侧导航轨：中屏及以上
+        primaryNavigation: SlotLayout(
+          config: <Breakpoint, SlotLayoutConfig>{
+            Breakpoints.medium: SlotLayout.from(
+              key: const Key('primaryNavigation'),
+              builder: (_) => AdaptiveScaffold.standardNavigationRail(
+                destinations: _railDestinations,
+                selectedIndex: currentIndex,
+                onDestinationSelected: _onNavSelected,
+              ),
+            ),
+            // mediumLargeAndUp 覆盖 840 及以上所有宽度（含 large/extraLarge）
+            Breakpoints.mediumLargeAndUp: SlotLayout.from(
+              key: const Key('primaryNavigationLarge'),
+              builder: (_) => AdaptiveScaffold.standardNavigationRail(
+                extended: true,
+                destinations: _railDestinations,
+                selectedIndex: currentIndex,
+                onDestinationSelected: _onNavSelected,
+              ),
+            ),
+          },
+        ),
+        // 正文：当前页面（smallAndUp 无上限，覆盖所有宽度）
+        body: SlotLayout(
+          config: <Breakpoint, SlotLayoutConfig>{
+            Breakpoints.smallAndUp: SlotLayout.from(
+              key: const Key('body'),
+              builder: (_) => _screens[currentIndex],
+            ),
+          },
+        ),
+        // 底部导航：仅小屏
+        bottomNavigation: SlotLayout(
+          config: <Breakpoint, SlotLayoutConfig>{
+            Breakpoints.small: SlotLayout.from(
+              key: const Key('bottomNavigation'),
+              builder: (_) => AdaptiveScaffold.standardBottomNavigationBar(
+                destinations: _navDestinations,
+                currentIndex: currentIndex,
+                onDestinationSelected: _onNavSelected,
+              ),
+            ),
+          },
+        ),
       ),
     );
   }
