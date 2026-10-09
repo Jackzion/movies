@@ -1,6 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:movies/data/models/anime_video.dart';
 import 'package:movies/data/database/models/database_models.dart';
+
+/// 是否为桌面平台（Windows / macOS / Linux）
+bool isDesktop() {
+  return Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+}
 
 Widget addVerticalSpace(double amount) {
   return SizedBox(height: amount);

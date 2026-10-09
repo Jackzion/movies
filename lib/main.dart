@@ -1,4 +1,5 @@
 import 'package:colorize_lumberdash/colorize_lumberdash.dart';
+import 'package:desktop_window/desktop_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumberdash/lumberdash.dart';
@@ -6,12 +7,19 @@ import 'package:media_kit/media_kit.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/utils/system_proxy.dart';
-  
-void main() { 
+import 'package:movies/utils/utils.dart';
+
+void main() async {
   // pod_player 在 Windows/Linux/macOS 底层用 media_kit,
   // 必须显式初始化，否则视频播放会直接报 "Error while playing video"
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+
+  // 桌面端限制窗口最小尺寸，避免过小导致布局不可用
+  if (isDesktop()) {
+    await DesktopWindow.setWindowSize(const Size(700, 600));
+    await DesktopWindow.setMinWindowSize(const Size(700, 600));
+  }
 
   // 全局应用系统代理（API 请求与图片加载都走代理）
   applySystemProxy();
