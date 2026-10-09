@@ -62,3 +62,8 @@ Future<AnimeViewModel> animeViewModel(Ref ref) async {
 final heroTagProvider = StateProvider<String>((ref) {
   return '';
 });
+
+/// 主框架导航下标（Home / Genre / Favorites）
+final currentNavIndexProvider = StateProvider<int>((ref) {
+  return 0;
+});
