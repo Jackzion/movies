@@ -37,7 +37,19 @@ class DriftGenre extends Table {
   tables: [DriftFavorite, DriftGenre],
 )
 class AnimeDatabase extends _$AnimeDatabase {
-  AnimeDatabase() : super(driftDatabase(name: 'Animes'));
+  /// driftDatabase 负责平台切换：
+  /// - 原生：文档目录下的 Animes.sqlite
+  /// - Web：WASM + web/sqlite3.wasm、web/drift_worker.js
+  AnimeDatabase()
+      : super(
+          driftDatabase(
+            name: 'Animes',
+            web: DriftWebOptions(
+              sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+              driftWorker: Uri.parse('drift_worker.js'),
+            ),
+          ),
+        );
 
   AnimeDatabase.forTesting(super.executor);
 
