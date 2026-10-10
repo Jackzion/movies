@@ -33,9 +33,15 @@ class GenreScreen extends ConsumerStatefulWidget {
 class _GenreScreenState extends ConsumerState<GenreScreen> {
   late AnimeViewModel animeViewModel;
   List<GenreState> genreStates = [];
-  String currentSearchString = '';
+  final searchTextNotifier = ValueNotifier<String>('');
   List<Anime> currentAnimeList = [];
   Sorting selectedSort = Sorting.aToz;
+
+  @override
+  void dispose() {
+    searchTextNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +95,16 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   Widget buildScreen() {
+    // SearchDialog / 菜单写入 searchTextProvider 时同步并触发搜索
+    final searchText = ref.watch(searchTextProvider);
+    if (searchText != searchTextNotifier.value) {
+      searchTextNotifier.value = searchText;
+      currentAnimeList = [];
+      expandedNotifier.value = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        search();
+      });
+    }
     return SafeArea(
       child: Container(
         color: screenBackground,
@@ -107,12 +123,21 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
-                        GenreSearchRow((searchString) {
-                          currentSearchString = searchString;
-                          FocusScope.of(context).unfocus();
-                          expandedNotifier.value = false;
-                          search();
-                        }),
+                        ValueListenableBuilder<String>(
+                          valueListenable: searchTextNotifier,
+                          builder: (BuildContext context, String value, Widget? child) {
+                            return GenreSearchRow(
+                              searchTextNotifier.value,
+                              (searchString) {
+                                searchTextNotifier.value = searchString;
+                                currentAnimeList = [];
+                                FocusScope.of(context).unfocus();
+                                expandedNotifier.value = false;
+                                search();
+                              },
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -157,11 +182,12 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   void search() async {
-    // 先搜索动漫
-    final animeList = await animeViewModel.searchAnimes(currentSearchString,1);
+    final query = searchTextNotifier.value;
+    final animeList = await animeViewModel.searchAnimes(query, 1);
+    if (!mounted) return;
     setState(() {
       currentAnimeList = animeList ?? [];
-         }); 
+    });
   }
 }
 

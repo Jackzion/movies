@@ -67,3 +67,9 @@ final heroTagProvider = StateProvider<String>((ref) {
 final currentNavIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
+
+/// 跨页面搜索关键字
+/// SearchDialog 写入，GenreScreen 监听后触发搜索
+final searchTextProvider = StateProvider<String>((ref) {
+  return '';
+});

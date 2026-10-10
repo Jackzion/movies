@@ -4,8 +4,10 @@ import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:movies/providers.dart';
+import 'package:movies/ui/menus.dart';
 import 'package:movies/ui/screens/favorites/favorite_screen.dart';
 import 'package:movies/ui/screens/genres/genre_screen.dart';
+import 'package:movies/ui/screens/genres/search_dialog.dart';
 import 'package:movies/ui/screens/home/home_screen.dart';
 import 'package:movies/ui/theme/theme.dart';
 
@@ -48,6 +50,26 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     ref.read(currentNavIndexProvider.notifier).state = navIndex;
   }
 
+  Future<void> _onMenuSelected(AppMenuAction action) async {
+    switch (action) {
+      case AppMenuAction.search:
+        await showDialog<void>(
+          context: context,
+          builder: (_) => const SearchDialog(),
+        );
+        break;
+      case AppMenuAction.home:
+        ref.read(currentNavIndexProvider.notifier).state = 0;
+        break;
+      case AppMenuAction.genres:
+        ref.read(currentNavIndexProvider.notifier).state = 1;
+        break;
+      case AppMenuAction.favorites:
+        ref.read(currentNavIndexProvider.notifier).state = 2;
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // 当前导航下标
@@ -83,7 +105,23 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           config: <Breakpoint, SlotLayoutConfig>{
             Breakpoints.smallAndUp: SlotLayout.from(
               key: const Key('body'),
-              builder: (_) => _screens[currentIndex],
+              builder: (_) => Stack(
+                children: [
+                  _screens[currentIndex],
+                  // 应用菜单：搜索 / 页面跳转
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: PopupMenuButton<AppMenuAction>(
+                      tooltip: 'Menu',
+                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                      color: searchBarBackground,
+                      onSelected: _onMenuSelected,
+                      itemBuilder: (_) => buildAppMenuItems(),
+                    ),
+                  ),
+                ],
+              ),
             ),
           },
         ),
