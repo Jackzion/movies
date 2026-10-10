@@ -1,65 +1,100 @@
-# Movies
+# Movies / Anime
 
-一个 Flutter 写的电影发现 Demo,首页展示 NOW PLAYING 的海报轮播(数据用 TMDB 风格的图片地址)。
+Flutter 跨端动漫发现应用：首页轮播、分类检索、详情与本地收藏。数据主源为 **Bangumi**，宽幅横幅 / PV 由 **AniList** 按需补充。
+
+## 参考书目
+
+开发过程中借鉴了：
+
+> **Mastering Flutter: Learn to develop Flutter apps for iOS, Android, desktop and web**  
+> — Kevin Moore
+
+书中以 TMDB 电影应用为例的工程实践（数据库分层、自适应布局、桌面窗口限制、Web + Drift 等），在本项目里改编为 Bangumi / AniList 动漫场景。
+
+## 功能概览
+
+- 首页：本季放送轮播、Trending / Popular / Top Rated 网格；悬停（桌面）扩到 2 列横幅
+- Genre：标签筛选与排序
+- Favorites：本地持久化收藏（Drift / SQLite）
+- 详情：海报与信息栏、章节 / 标签、角色与声优、预告缩略图
+- 自适应导航：小屏底部栏，中大屏 NavigationRail（`flutter_adaptive_scaffold`）
+- 桌面：窗口最小 700×600（`desktop_window`）
+- Web：`sqlite3.wasm` + `drift_worker.js`，收藏可跨刷新保留
 
 ## 技术栈
 
-- **Flutter** (Dart SDK `^3.13.2`)
-- **Material** 默认主题
-- 主要依赖:
-  - [`card_swiper`](https://pub.dev/packages/card_swiper) — 卡片轮播
-  - [`cached_network_image`](https://pub.dev/packages/cached_network_image) — 网络图片缓存
-  - [`material_symbols_icons`](https://pub.dev/packages/material_symbols_icons) — Material Symbols 图标
+- **Flutter**（Dart SDK `^3.13.2`）
+- 状态与路由：`flutter_riverpod`、`auto_route`
+- 网络：`dio`（Bangumi REST + AniList GraphQL）
+- 本地存储：`drift` / `drift_flutter`（收藏、标签）；`shared_preferences`（缓存）
+- UI：`cached_network_image`、`google_fonts`、`card_swiper`、`media_kit`
+- 自适应：`flutter_adaptive_scaffold`、`desktop_window`
 
 ## 项目结构
 
-```
+```text
 lib/
-├── main.dart                          # 入口
+├── main.dart                    # 入口（桌面窗口尺寸、日志、代理）
+├── providers.dart               # Riverpod：API / DB / ViewModel
+├── data/
+│   ├── models/                  # Anime、AnimeDetails、Genre…
+│   └── database/
+│       ├── models/              # DBFavorite、DBAnimeGenre、IDatabase
+│       └── drift/               # Drift 表与实现
+├── network/                     # BangumiApiService / AniListApiService
+├── router/                      # auto_route 路由
 └── ui/
-    ├── main_screen.dart               # 主框架 + 底部 Tab
-    └── screens/
-        └── home/
-            ├── home_screen.dart        # 首页(NOW PLAYING 标题)
-            └── home_screen_image.dart  # 海报轮播组件
+    ├── main_screen.dart         # AdaptiveLayout 三槽位导航
+    ├── screens/                 # home / genres / favorites / detail / videos
+    └── widgets/                 # 卡片、收藏行、演员条…
 ```
 
 ## 跑起来
 
-环境要求:Flutter SDK(支持 Dart `^3.13.2`),任一目标平台(Windows / macOS / Linux / Android / iOS / Web)。
+环境：Flutter SDK（Dart `^3.13.2`），目标平台任选（Windows / macOS / Linux / Android / iOS / Web）。
 
 ```bash
-# 装依赖
 flutter pub get
 
-# 跑起来(默认设备)
-flutter run
-
-# 指定设备
-flutter run -d chrome
-flutter run -d windows
+flutter run                 # 默认设备
+flutter run -d chrome       # Web
+flutter run -d windows      # 桌面
 flutter run -d android
 ```
 
-### Windows 用户注意 ⚠️
+改 Drift 表结构后如需重新生成代码：
 
-项目用了 plugin(`card_swiper` / `cached_network_image` / `material_symbols_icons`),
-Windows 上必须开启「**开发者模式**」才能 build,否则会报:
-
-```
-Error: Building with plugins requires symlink support.
+```bash
+flutter pub run build_runner build
 ```
 
-开启方法:`Win + I` → 搜索「开发者设置」→ 打开「开发人员模式」。
+### Web 说明
+
+`web/` 下需包含（已入库）：
+
+- `sqlite3.wasm` — 浏览器里的 SQLite（WASM）
+- `drift_worker.js` — Drift 后台 worker
+
+`AnimeDatabase` 通过 `driftDatabase` + `DriftWebOptions` 自动切换原生 / Web。
+
+### Windows 注意 ⚠️
+
+使用插件时需开启「开发人员模式」，否则可能报 symlink 相关错误：
+
+`Win + I` → 搜索「开发者设置」→ 打开「开发人员模式」。
 
 ## 已实现 / 待实现
 
-- [x] 主框架(底部三 Tab:Home / Genre / Favorites)
-- [x] 首页 — NOW PLAYING 海报轮播(自动播放)
-- [ ] Genre 分类页
-- [ ] Favorites 收藏页
-- [ ] 真实 TMDB API 接入(目前海报 URL 是硬编码的)
-- [ ] 电影详情页
+- [x] 主框架（自适应导航：Home / Genre / Favorites）
+- [x] 首页轮播 + 多分类网格
+- [x] Bangumi 搜索 / 日历 / 详情 / 角色
+- [x] AniList 横幅与 PV 补充
+- [x] Drift 收藏与标签持久化
+- [x] 详情页（信息布局、预告、收藏按钮）
+- [x] Web / 桌面基础适配
+- [ ] 评论 BBCode 富文本（可参考 Kazumi 的 ANTLR 方案）
+- [ ] 图片按分辨率动态取图
+- [ ] 搜索页体验完善
 
 ## License
 
