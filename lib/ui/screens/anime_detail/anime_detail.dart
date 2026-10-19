@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lumberdash/lumberdash.dart';
+import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_extras.dart';
@@ -71,7 +72,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
 
   Widget buildDetailScreen() {
     final details = animeDetails!;
-    final favoriteNotifier = ValueNotifier<bool>(false);
+    final favoriteNotifier = ValueNotifier<bool>(animeViewModel.isFavorite(widget.animeId));
 
     return SafeArea(
       child: Scaffold(
@@ -107,8 +108,9 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                     builder: (BuildContext context, bool value, Widget? child) {
                       return ButtonRow(
                         favoriteSelected: favoriteNotifier.value,
-                        onFavoriteSelected: () {
-                          favoriteNotifier.value = !favoriteNotifier.value;
+                        onFavoriteSelected: () async {
+                          await animeViewModel.toggleFavorite(Anime(bangumiId: widget.animeId));
+                          favoriteNotifier.value = animeViewModel.isFavorite(widget.animeId);
                         },
                       );
                     },

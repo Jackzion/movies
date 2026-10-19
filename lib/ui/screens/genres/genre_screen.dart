@@ -32,12 +32,18 @@ class GenreScreen extends ConsumerStatefulWidget {
 class _GenreScreenState extends ConsumerState<GenreScreen> {
   late AnimeViewModel animeViewModel;
   List<GenreState> genreStates = [];
-  String currentSearchString = '';
+  final searchTextNotifier = ValueNotifier<String>('');
   List<Anime> currentAnimeList = [];
   Sorting selectedSort = Sorting.aToz;
 
   /// 类型列表是否已初始化（避免每次 build 清空重建）
   bool _genreStateReady = false;
+
+  @override
+  void dispose() {
+    searchTextNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +107,16 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   Widget buildScreen() {
+    // SearchDialog / 菜单写入 searchTextProvider 时同步并触发搜索
+    final searchText = ref.watch(searchTextProvider);
+    if (searchText != searchTextNotifier.value) {
+      searchTextNotifier.value = searchText;
+      currentAnimeList = [];
+      expandedNotifier.value = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        search();
+      });
+    }
     return SafeArea(
       child: Container(
         color: screenBackground,

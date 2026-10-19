@@ -298,7 +298,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
 
   /// 收藏按钮（点击切换收藏状态并更新收藏列表）
   Widget buildFavoriteButton(Anime anime) {
-    final favoriteSelected = widget.animeViewModel.isFavorite(anime);
+    final favoriteSelected = widget.animeViewModel.isFavorite(anime.animeId);
     return GestureDetector(
       onTap: () => toggleFavorite(anime),
       child: Container(

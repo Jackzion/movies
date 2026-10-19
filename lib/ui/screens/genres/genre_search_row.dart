@@ -5,22 +5,17 @@ import 'package:movies/ui/theme/theme.dart';
 typedef OnSearch = void Function(String searchString);
 
 class GenreSearchRow extends ConsumerStatefulWidget {
+  final String searchText;
   final OnSearch onSearch;
-  const GenreSearchRow(this.onSearch, {super.key});
+  const GenreSearchRow(this.searchText, this.onSearch, {super.key});
   @override
   ConsumerState<GenreSearchRow> createState() => _GenreSearchRowState();
 }
 
 class _GenreSearchRowState extends ConsumerState<GenreSearchRow> {
-  late TextEditingController animeTextController;
-  late FocusNode textFocusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    animeTextController = TextEditingController(text: '');
-    textFocusNode = FocusNode();
-  }
+  late TextEditingController animeTextController =
+      TextEditingController(text: widget.searchText);
+  late FocusNode textFocusNode = FocusNode();
 
   @override
   void dispose() {
@@ -31,6 +26,8 @@ class _GenreSearchRowState extends ConsumerState<GenreSearchRow> {
 
   @override
   Widget build(BuildContext context) {
+    // 与外部 searchTextNotifier 保持同步（Dialog / 菜单写入时更新输入框）
+    animeTextController.text = widget.searchText;
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
