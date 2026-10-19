@@ -8,6 +8,7 @@ import 'package:movies/providers.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/utils/system_proxy.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/utils/webview_probe.dart';
 
 void main() async {
   // pod_player 在 Windows/Linux/macOS 底层用 media_kit,
@@ -27,6 +28,10 @@ void main() async {
   // 初始化 lumberdash 日志工具
   putLumberdashToWork(withClients: [ColorizeLumberdash()]);
 
+  // 启动 APP 前检测 webView2 是否可用
+  final ok = await probeHeadlessWebview();
+  debugPrint('WebView2 available: $ok');
+  
   runApp(const ProviderScope(child: MainApp()));
 }
 
