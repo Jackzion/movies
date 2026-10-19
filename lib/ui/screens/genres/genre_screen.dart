@@ -32,8 +32,8 @@ class GenreScreen extends ConsumerStatefulWidget {
 class _GenreScreenState extends ConsumerState<GenreScreen> {
   late AnimeViewModel animeViewModel;
   List<GenreState> genreStates = [];
-  final searchTextNotifier = ValueNotifier<String>('');
   List<Anime> currentAnimeList = [];
+  String _lastSearchedText = '';
   Sorting selectedSort = Sorting.aToz;
 
   /// 类型列表是否已初始化（避免每次 build 清空重建）
@@ -41,7 +41,6 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
 
   @override
   void dispose() {
-    searchTextNotifier.dispose();
     super.dispose();
   }
 
@@ -109,8 +108,8 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   Widget buildScreen() {
     // SearchDialog / 菜单写入 searchTextProvider 时同步并触发搜索
     final searchText = ref.watch(searchTextProvider);
-    if (searchText != searchTextNotifier.value) {
-      searchTextNotifier.value = searchText;
+    if (searchText != _lastSearchedText) {
+      _lastSearchedText = searchText; // 只读记忆，没有任何地方会"回写"它
       currentAnimeList = [];
       expandedNotifier.value = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -135,13 +134,14 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
-                        GenreSearchRow((searchString) {
-                          currentSearchString = searchString;
-                          FocusScope.of(context).unfocus();
-                          // 只收起类型区，不清空类型数据
-                          expandedNotifier.value = false;
-                          search();
-                        }),
+                        GenreSearchRow(
+                          searchText,                       // buildScreen 里已经 ref.watch 拿到了
+                          (searchString) {
+                            // 只写 provider，其余交给 buildScreen 统一触发
+                            ref.read(searchTextProvider.notifier).state = searchString;
+                            FocusScope.of(context).unfocus();
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -192,7 +192,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
         .map((state) => state.genre.name)
         .toList();
     final animeList = await animeViewModel.searchAnimes(
-      currentSearchString,
+      ref.read(searchTextProvider),
       1,
       selectedTags.isEmpty ? null : selectedTags,
     );
