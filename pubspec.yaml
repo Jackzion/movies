@@ -31,6 +31,18 @@ dependencies:
   flutter:
     sdk: flutter
 
+    # Windows 无头 WebView（Predidit fork，含 HeadlessWebview / 媒体事件）
+  # 注意：必须用 git + 固定 ref，不能改成 pub.dev 上的 webview_windows
+  webview_windows:
+    git:
+      url: https://github.com/Predidit/flutter-webview-windows.git
+      ref: 2b3306d2bfb9f22cbb328743b60e547cf50f0c3c
+
+  # HTML 解析 + XPath（Phase 3 才真正用到，Phase 0 先装上）
+  html: any
+  xpath_selector: ^3.0.2
+  xpath_selector_html_parser: ^3.0.1
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
