@@ -1,9 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:movies/data/database/drift/drift_database.dart';
 import 'package:movies/data/database/models/database_interface.dart';
 import 'package:movies/network/anilist_api_service.dart';
 import 'package:movies/network/bangumi_api_service.dart';
 import 'package:movies/router/app_routes.dart';
+import 'package:movies/services/video_source/webview_video_source_service.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/prefs.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -73,3 +75,16 @@ final currentNavIndexProvider = StateProvider<int>((ref) {
 final searchTextProvider = StateProvider<String>((ref) {
   return '';
 });
+
+/// 无头 WebView 取流服务（应用级单例）
+/// keepAlive: 整个 App 生命周期内复用同一个 HeadlessWebview
+@Riverpod(keepAlive: true)
+WebviewVideoSourceService webviewVideoSourceService(Ref ref){
+  final service = WebviewVideoSourceService();
+  // provider 被销毁时（极少见，keepAlive 一般活到 App 退出）顺带销毁 WebView
+  ref.onDispose(() {
+    // fire-and-forget：dispose 是异步的，不阻塞销毁流程
+    service.dispose();
+  });
+  return service;
+}

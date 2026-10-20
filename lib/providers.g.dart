@@ -343,3 +343,59 @@ final class AnimeViewModelProvider
 }
 
 String _$animeViewModelHash() => r'fa2aa819a77ba564ee66efbaa2aef9de2757fffe';
+
+/// 无头 WebView 取流服务（应用级单例）
+/// keepAlive: 整个 App 生命周期内复用同一个 HeadlessWebview
+
+@ProviderFor(webviewVideoSourceService)
+final webviewVideoSourceServiceProvider = WebviewVideoSourceServiceProvider._();
+
+/// 无头 WebView 取流服务（应用级单例）
+/// keepAlive: 整个 App 生命周期内复用同一个 HeadlessWebview
+
+final class WebviewVideoSourceServiceProvider
+    extends
+        $FunctionalProvider<
+          WebviewVideoSourceService,
+          WebviewVideoSourceService,
+          WebviewVideoSourceService
+        >
+    with $Provider<WebviewVideoSourceService> {
+  /// 无头 WebView 取流服务（应用级单例）
+  /// keepAlive: 整个 App 生命周期内复用同一个 HeadlessWebview
+  WebviewVideoSourceServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'webviewVideoSourceServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$webviewVideoSourceServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<WebviewVideoSourceService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  WebviewVideoSourceService create(Ref ref) {
+    return webviewVideoSourceService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WebviewVideoSourceService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WebviewVideoSourceService>(value),
+    );
+  }
+}
+
+String _$webviewVideoSourceServiceHash() =>
+    r'e7a9e809c40b1617102527a8a5323fee16e46ca9';
