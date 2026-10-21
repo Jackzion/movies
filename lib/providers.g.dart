@@ -446,3 +446,49 @@ final class RulesRepositoryProvider
 }
 
 String _$rulesRepositoryHash() => r'5c884e97800d3bbbdc5d1cb3128e2f2146b810a1';
+
+/// 规则引擎（无状态；Dio 复用）
+
+@ProviderFor(ruleEngine)
+final ruleEngineProvider = RuleEngineProvider._();
+
+/// 规则引擎（无状态；Dio 复用）
+
+final class RuleEngineProvider
+    extends $FunctionalProvider<RuleEngine, RuleEngine, RuleEngine>
+    with $Provider<RuleEngine> {
+  /// 规则引擎（无状态；Dio 复用）
+  RuleEngineProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ruleEngineProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$ruleEngineHash();
+
+  @$internal
+  @override
+  $ProviderElement<RuleEngine> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  RuleEngine create(Ref ref) {
+    return ruleEngine(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(RuleEngine value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<RuleEngine>(value),
+    );
+  }
+}
+
+String _$ruleEngineHash() => r'64f75db1d7422b056139686298575f105cfa0985';

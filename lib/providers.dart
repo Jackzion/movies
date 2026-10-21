@@ -5,6 +5,7 @@ import 'package:movies/data/database/models/database_interface.dart';
 import 'package:movies/data/database/repositories/rules_repository.dart';
 import 'package:movies/network/anilist_api_service.dart';
 import 'package:movies/network/bangumi_api_service.dart';
+import 'package:movies/network/rule_engine.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/services/video_source/webview_video_source_service.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
@@ -97,3 +98,7 @@ Future<RulesRepository> rulesRepository(Ref ref) async {
   final prefs = await ref.read(prefsProvider.future);
   return RulesRepository(prefs);
 }
+
+/// 规则引擎（无状态；Dio 复用）
+@Riverpod(keepAlive: true)
+RuleEngine ruleEngine(Ref ref) => RuleEngine();
