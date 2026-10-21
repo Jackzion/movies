@@ -1,8 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/data/database/models/rules_model.dart';
+import 'package:movies/data/models/source_rule.dart';
+import 'package:movies/network/rule_engine.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/services/video_source/video_source.dart';
+import 'package:movies/ui/screens/source_sheet/source_import_dialog.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -29,6 +33,9 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
   /// 解析中标志：避免连点，也方便看按钮状态
   bool _parsing = false;
+
+  /// Phase 3 调试：规则引擎测试中
+  bool _ruleTesting = false;
 
   @override
   void initState() {
@@ -106,6 +113,118 @@ class _VideoPageState extends ConsumerState<VideoPage> {
     }
   }
 
+  /// ===== Phase 3 临时调试：RuleEngine 搜索 + 分集 =====
+  /// Phase 2 已能导入规则：优先从仓库读；空则引导导入。
+  Future<void> _debugRuleEngine() async {
+    if (_ruleTesting || _parsing) return;
+    setState(() => _ruleTesting = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Phase3：从仓库读规则并搜索…')),
+    );
+
+    try {
+      final repo = await ref.read(rulesRepositoryProvider.future);
+      final rules = repo.getAll();
+      debugPrint('[Phase3] 已导入规则 ${rules.length} 条');
+
+      if (rules.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('还没有规则：先 ⋮ → Sources → Import'),
+          ),
+        );
+        // 空库时直接弹导入框，方便验收
+        if (mounted) {
+          await showSourceImportDialog(context);
+        }
+        return;
+      }
+
+      // 默认用第一条；也可改成 repo.getByName('7sefun')
+      final SourceRule rule = rules.first;
+      const keyword = '葬送的芙莉莲';
+      debugPrint('[Phase3] 使用规则 ${rule.name}  搜索「$keyword」');
+
+      final engine = RuleEngine();
+
+      // ① 搜索
+      final items = await engine.search(rule, keyword);
+      debugPrint('[Phase3] 搜索命中 ${items.length} 条');
+      for (final item in items.take(5)) {
+        debugPrint('[Phase3]   - ${item.name} => ${item.src}');
+      }
+
+      // ② 对第一条拉线路/分集
+      final roads = await engine.queryChapters(rule, items.first.src);
+      debugPrint('[Phase3] 线路 ${roads.length} 条');
+      for (final road in roads) {
+        debugPrint('[Phase3]   ${road.name}: ${road.episodeCount} 集');
+        if (road.data.isNotEmpty) {
+          debugPrint(
+            '[Phase3]     首集 ${road.identifier.first} ${road.data.first}',
+          );
+        }
+      }
+
+      // ③ 可选联调：把首集分集页丢给 Phase 1 无头取流
+      String? probePage;
+      if (roads.isNotEmpty && roads.first.data.isNotEmpty) {
+        probePage = roads.first.data.first;
+        debugPrint('[Phase3→1] 试解析分集页 $probePage');
+        try {
+          final source = await ref
+              .read(webviewVideoSourceServiceProvider)
+              .parseVideoSource(probePage);
+          debugPrint('[Phase3→1] resolved => ${source.url} (${source.format})');
+          // 拿到直链就试播（验证整条链路）
+          await player.open(Media(source.url));
+        } on VideoSourceTimeoutException {
+          debugPrint('[Phase3→1] 取流超时（分集页可能改版/需登录）');
+        } on VideoSourceCanceledException {
+          debugPrint('[Phase3→1] 取流取消');
+        } catch (e) {
+          debugPrint('[Phase3→1] 取流失败: $e');
+        }
+      }
+
+      if (!mounted) return;
+      final buf = StringBuffer('规则 ${rule.name}：搜索 ${items.length} 条');
+      if (roads.isNotEmpty) {
+        buf.write('，线路 ${roads.length} / 首线路 ${roads.first.episodeCount} 集');
+      }
+      if (probePage != null) {
+        buf.write('；已尝试取流');
+      }
+      messenger.showSnackBar(SnackBar(content: Text(buf.toString())));
+    } on NoResultException catch (e) {
+      debugPrint('[Phase3] NoResult: $e');
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text('无结果：$e')));
+      }
+    } on ChapterEmptyException catch (e) {
+      debugPrint('[Phase3] ChapterEmpty: $e');
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text('无分集：$e')));
+      }
+    } on RuleEngineException catch (e) {
+      debugPrint('[Phase3] EngineError: $e');
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text('引擎错误：$e')));
+      }
+    } catch (e) {
+      debugPrint('[Phase3] error: $e');
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text('失败：$e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _ruleTesting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,6 +261,24 @@ class _VideoPageState extends ConsumerState<VideoPage> {
                         )
                       : const Icon(Icons.travel_explore),
                   label: Text(_parsing ? '解析中…' : 'Phase1 测试取流'),
+                ),
+              ),
+            ),
+            // ===== Phase 3 临时调试按钮 =====
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _ruleTesting ? null : _debugRuleEngine,
+                  icon: _ruleTesting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.rule),
+                  label: Text(_ruleTesting ? '引擎测试中…' : 'Phase3 测试搜索'),
                 ),
               ),
             ),
