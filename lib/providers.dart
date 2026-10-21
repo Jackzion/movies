@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:movies/data/database/drift/drift_database.dart';
 import 'package:movies/data/database/models/database_interface.dart';
+import 'package:movies/data/database/repositories/rules_repository.dart';
 import 'package:movies/network/anilist_api_service.dart';
 import 'package:movies/network/bangumi_api_service.dart';
 import 'package:movies/router/app_routes.dart';
@@ -87,4 +88,12 @@ WebviewVideoSourceService webviewVideoSourceService(Ref ref){
     service.dispose();
   });
   return service;
+}
+
+/// 规则仓库：应用内单例
+/// 提供 RulesRepository 实例（负责规则数据的读写）
+@Riverpod(keepAlive: true)
+Future<RulesRepository> rulesRepository(Ref ref) async {
+  final prefs = await ref.read(prefsProvider.future);
+  return RulesRepository(prefs);
 }

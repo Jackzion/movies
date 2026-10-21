@@ -399,3 +399,50 @@ final class WebviewVideoSourceServiceProvider
 
 String _$webviewVideoSourceServiceHash() =>
     r'e7a9e809c40b1617102527a8a5323fee16e46ca9';
+
+/// 规则仓库：应用内单例
+/// 提供 RulesRepository 实例（负责规则数据的读写）
+
+@ProviderFor(rulesRepository)
+final rulesRepositoryProvider = RulesRepositoryProvider._();
+
+/// 规则仓库：应用内单例
+/// 提供 RulesRepository 实例（负责规则数据的读写）
+
+final class RulesRepositoryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<RulesRepository>,
+          RulesRepository,
+          FutureOr<RulesRepository>
+        >
+    with $FutureModifier<RulesRepository>, $FutureProvider<RulesRepository> {
+  /// 规则仓库：应用内单例
+  /// 提供 RulesRepository 实例（负责规则数据的读写）
+  RulesRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'rulesRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$rulesRepositoryHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<RulesRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<RulesRepository> create(Ref ref) {
+    return rulesRepository(ref);
+  }
+}
+
+String _$rulesRepositoryHash() => r'5c884e97800d3bbbdc5d1cb3128e2f2146b810a1';

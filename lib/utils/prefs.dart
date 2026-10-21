@@ -11,8 +11,8 @@ class Prefs {
   // String 方法
 
   /// 存储字符串
-  void setString(String key, String value) {
-    preferences.setString(key, value);
+  Future<void> setString(String key, String value) async {
+    await preferences.setString(key, value);
   }
 
   /// 获取字符串
@@ -23,8 +23,8 @@ class Prefs {
   // int 方法
 
   /// 存储整数
-  void setInt(String key, int value) {
-    preferences.setInt(key, value);
+  Future<void> setInt(String key, int value) async {
+    await preferences.setInt(key, value);
   }
 
   /// 获取整数
@@ -35,8 +35,8 @@ class Prefs {
   // bool 方法
 
   /// 存储布尔值
-  void setBool(String key, bool value) {
-    preferences.setBool(key, value);
+  Future<void> setBool(String key, bool value) async {
+    await preferences.setBool(key, value);
   }
 
   /// 获取布尔值
@@ -47,8 +47,8 @@ class Prefs {
   // double 方法
 
   /// 存储浮点数
-  void setDouble(String key, double value) {
-    preferences.setDouble(key, value);
+  Future<void> setDouble(String key, double value) async {
+    await preferences.setDouble(key, value);
   }
 
   /// 获取浮点数

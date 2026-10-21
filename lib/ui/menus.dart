@@ -5,7 +5,8 @@ enum AppMenuAction {
   search('Search', Icons.search),
   home('Home', Icons.home_outlined),
   genres('Genres', Icons.theaters_outlined),
-  favorites('Favorites', Icons.favorite_outline);
+  favorites('Favorites', Icons.favorite_outline),
+  sources('Sources' , Icons.travel_explore);
 
   const AppMenuAction(this.label, this.icon);
 

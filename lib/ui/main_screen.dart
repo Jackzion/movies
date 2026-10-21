@@ -9,6 +9,7 @@ import 'package:movies/ui/screens/favorites/favorite_screen.dart';
 import 'package:movies/ui/screens/genres/genre_screen.dart';
 import 'package:movies/ui/screens/genres/search_dialog.dart';
 import 'package:movies/ui/screens/home/home_screen.dart';
+import 'package:movies/ui/screens/source_sheet/source_rules_dialog.dart';
 import 'package:movies/ui/theme/theme.dart';
 
 /// 主框架：AdaptiveLayout 三槽位
@@ -66,6 +67,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         break;
       case AppMenuAction.favorites:
         ref.read(currentNavIndexProvider.notifier).state = 2;
+        break;
+      case AppMenuAction.sources:
+        await showSourceRulesDialog(context);
         break;
     }
   }
