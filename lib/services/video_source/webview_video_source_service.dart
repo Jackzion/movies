@@ -55,6 +55,11 @@ class WebviewVideoSourceService{
     return result;
   }
 
+  /// 取消当前进行中的解析任务。
+  void cancel() {
+    _activeRequest?.cancel();
+  }
+
   /// 销毁：不再接受新任务 → 取消进行中的 → 等队列排空 → 销毁 WebView。
   /// 一般只在 provider dispose 或 App 退出时调用。
   Future<void> dispose() async{

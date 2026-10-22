@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +13,7 @@ import 'package:movies/ui/screens/source_sheet/source_import_dialog.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:movies/utils/utils.dart';
 
 /// 视频播放页面
 /// 使用 media_kit 播放预告片视频，支持播放控制
@@ -30,6 +33,21 @@ class VideoPage extends ConsumerStatefulWidget {
 class _VideoPageState extends ConsumerState<VideoPage> {
   late final Player player;
   late final VideoController controller;
+
+  /// 当前线路下标（playroads 的 index）
+  int _roadIndex = 0;
+
+  /// 当前集下标（roads[_roadIndex].data 的 index，0-based）
+  int _episodeIndex = 0;
+
+  /// 正在解析 / 开播
+  bool _resolving = false;
+
+  /// 底部/侧栏错误提示（null = 无）
+  String? _playError;
+
+  /// 是否正片模式（有 playContext）
+  bool get _isOnlinePlay => widget.playContext != null;
 
   /// 浏览器打开番剧站某一集的播放页，复制地址栏整段 URL 粘到这里。
   /// 注意：必须是「分集播放页」，不是首页/详情页。
@@ -60,30 +78,18 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
     final play = widget.playContext;
     if (play != null) {
-      // 从上下文解析起始分集页索引
       final indices = play.resolveStartIndices();
       if (indices != null) {
-        // 获取播放页 URL
-        final pageUrl = play.episodePageUrl(indices.$1, indices.$2);
-        debugPrint('[VideoPage] 正片上下文 ${play.rule.name} → $pageUrl');
-        // Phase 5：在这里 parseVideoSource(pageUrl) + open
-        // Phase 4：先提示
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '已进入正片：${play.title} / ${play.rule.name}\n'
-                '分集页已就绪（Phase 5 接取流）\n$pageUrl',
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          );
-        });
+        _roadIndex = indices.$1;
+        _episodeIndex = indices.$2;
       }
+      // 首帧后再开播，避免 initState 里 setState
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_playEpisode());
+      });
     } else {
-      // 现有预告片测试视频
+      // 预告片路径保持不变
       player.open(
         Media(
           'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
@@ -94,6 +100,8 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
   @override
   void dispose() {
+    // 离开播放页：作废在途取流，避免后台继续写状态
+    ref.read(webviewVideoSourceServiceProvider).cancel();
     player.dispose();
     super.dispose();
   }
@@ -249,82 +257,304 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final play = widget.playContext;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: screenBackground,
-        // 教程这里写的是空函数 () {},按下没反应。改成 maybePop 真正返回上一页
         leading: BackButton(
           color: Colors.white,
           onPressed: () => context.router.maybePop(),
         ),
         centerTitle: false,
         title: Text(
-          widget.playContext?.title ?? 'Back',
+          play?.title ?? 'Back',
           style: Theme.of(context).textTheme.headlineMedium,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: screenBackground,
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // ===== Phase 1 临时调试按钮（验收完可整段删除）=====
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _parsing ? null : _debugParseVideoSource,
-                  icon: _parsing
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.travel_explore),
-                  label: Text(_parsing ? '解析中…' : 'Phase1 测试取流'),
-                ),
-              ),
-            ),
-            // ===== Phase 3 临时调试按钮 =====
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _ruleTesting ? null : _debugRuleEngine,
-                  icon: _ruleTesting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.rule),
-                  label: Text(_ruleTesting ? '引擎测试中…' : 'Phase3 测试搜索'),
-                ),
-              ),
-            ),
-            // ===== 临时调试结束 =====
+      body: play == null
+          ? _buildTrailerBody()
+          : _buildOnlineBody(play),
+    );
+  }
 
-            // 视频渲染区:Video widget + VideoController
-            Expanded(
-              child: Video(
-                controller: controller,
-                fit: BoxFit.contain,
-                // 自带 Material 风格控件(播放/暂停/进度条)
-                controls: (VideoState state) {
-                  return MaterialVideoControls(state);
-                },
-              ),
+  Widget _buildOnlineBody(PlayContext play) {
+    return Container(
+      color: screenBackground,
+      width: double.infinity,
+      height: double.infinity,
+      child: Row(
+        children: [
+          // 左：播放器
+          Expanded(
+            flex: 3,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  // 视频渲染区:Video widget + VideoController
+                  child: Video(
+                    controller: controller,
+                    fit: BoxFit.contain,
+                    controls: (VideoState state) {
+                      return MaterialVideoControls(state);
+                    },
+                  ),
+                ),
+                if (_resolving)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black54,
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          addVerticalSpace(12),
+                          Text('正在解析视频源…', style: body2Regular),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (_playError != null && !_resolving)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black87,
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _playError!,
+                              textAlign: TextAlign.center,
+                              style: body2Regular,
+                            ),
+                            addVerticalSpace(16),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // 重试
+                                ElevatedButton(
+                                  onPressed: _playEpisode,
+                                  child: const Text('重试'),
+                                ),
+                                addHorizontalSpace(12),
+                                // 换线路
+                                OutlinedButton(
+                                  onPressed: () {
+                                    // 换下一条线路的第一集
+                                    if (play.roads.length <= 1) return;
+                                    final next =
+                                        (_roadIndex + 1) % play.roads.length;
+                                    _changeEpisode(next, 0);
+                                  },
+                                  child: const Text('换线路'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // 右：线路 + 分集
+          SizedBox(width: 240, child: _buildEpisodePanel(play)),
+        ],
       ),
     );
+  }
+
+  Widget _buildEpisodePanel(PlayContext play) {
+    return Container(
+      color: searchBarBackground,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('线路', style: body2Bold),
+          addVerticalSpace(8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (var i = 0; i < play.roads.length; i++)
+                ChoiceChip(
+                  label: Text(play.roads[i].name),
+                  selected: i == _roadIndex,
+                  onSelected: (_) => _changeEpisode(i, 0),
+                ),
+            ],
+          ),
+          addVerticalSpace(12),
+          Text('分集', style: body2Bold),
+          addVerticalSpace(8),
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 6,
+                crossAxisSpacing: 6,
+                childAspectRatio: 1.6,
+              ),
+              itemCount: play.roads[_roadIndex].data.length,
+              itemBuilder: (context, i) {
+                final selected = i == _episodeIndex;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: () => _changeEpisode(_roadIndex, i),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? const Color(0xFF3B7FC0)
+                          : const Color(0xFF343434),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      _episodeDisplayName(play, _roadIndex, i),
+                      style: body3Regular,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 预告 trailer 视频渲染区
+  Widget _buildTrailerBody() {
+    // 直接拿 playerContext.detailurl 作为直链即可 - 无需验证是否存在
+    final play = widget.playContext!;
+    final trailerUrl = play.detailUrl;
+    debugPrint('[Play] 解析 trailer → $trailerUrl');
+    return Video(
+      controller: controller,
+      fit: BoxFit.contain,
+    );
+  }
+
+
+  /// 解析并播放当前 (_roadIndex, _episodeIndex) -> sourceurl -> media_kit 开流
+  Future<void> _playEpisode() async {
+    // 验证 playContext 是否存在
+    if (widget.playContext == null) return;
+    final play = widget.playContext!;
+
+    // 验证 playContext 数据是否齐全
+    if (play.roads.isEmpty ||
+        _roadIndex >= play.roads.length ||
+        play.roads[_roadIndex].data.isEmpty ||
+        _episodeIndex >= play.roads[_roadIndex].data.length) {
+      setState(() => _playError = '集数解析失败');
+      return;
+    }
+
+    final service = ref.read(webviewVideoSourceServiceProvider);
+
+    // 作废上一次解析；
+    service.cancel();
+    // 停掉上一个媒体
+    await player.stop();
+
+    final pageUrl = play.episodePageUrl(_roadIndex, _episodeIndex);
+    final episodeLabel = _episodeDisplayName(play, _roadIndex, _episodeIndex);
+
+    debugPrint('[Play] 解析 $episodeLabel → $pageUrl');
+
+    // 开始解析
+    setState(() {
+      _resolving = true;
+      _playError = null;
+    });
+
+    try {
+      // 无头 WebView 钓直链
+      final source = await service.parseVideoSource(pageUrl);
+      debugPrint('[Play] resolved => ${source.url} (${source.format})');
+
+      // 判断组件是否已销毁
+      if (!mounted) return;
+
+      // 组装请求头（规则 UA / Referer）
+      final headers = _buildHttpHeaders(play);
+
+      // if (source.format == VideoSourceFormat.hls) {
+      //   try {
+      //     await player.platform?.setProperty('demuxer-lavf-format', 'hls');
+      //   } catch (e) {
+      //     debugPrint('[Play] set demuxer-lavf-format failed: $e');
+      //   }
+      // }
+
+      // media_kit 开流
+      await player.open(Media(source.url, httpHeaders: headers), play: true);
+      if (!mounted) return;
+
+      setState(() => _resolving = false);
+    } on VideoSourceTimeoutException {
+      debugPrint('[Play] 取流超时');
+      if (!mounted) return;
+      setState(() {
+        _resolving = false;
+        _playError = '视频解析超时，请重试或换线路';
+      });
+    } on VideoSourceCanceledException {
+      // 换集/退出导致的主动取消：静默
+      debugPrint('[Play] 取消（正常）');
+      if (mounted) {
+        setState(() => _resolving = false);
+      }
+    } catch (e) {
+      debugPrint('[Play] 失败: $e');
+      if (!mounted) return;
+      setState(() {
+        _resolving = false;
+        _playError = '视频解析失败：$e';
+      });
+    }
+  }
+
+  /// 规则 → 播放请求头
+  Map<String, String> _buildHttpHeaders(PlayContext play) {
+    const fallbackUa =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/120.0.0.0 Safari/537.36';
+    // 从规则中获取 UA / Referer
+    final ua = play.rule.userAgent.trim();
+    final referer = play.rule.referer.trim();
+    return {
+      'user-agent': ua.isEmpty ? fallbackUa : ua,
+      if (referer.isNotEmpty) 'referer': referer,
+    };
+  }
+
+  /// 集显示名：优先 identifier，否则「第N集」
+  String _episodeDisplayName(PlayContext play, int road, int ep) {
+    final id = play.roads[road].identifier;
+    if (ep < id.length && id[ep].isNotEmpty) return id[ep];
+    return '第${ep + 1}集';
+  }
+
+  /// 用户点分集 / 换线路入口
+  Future<void> _changeEpisode(int roadIndex, int episodeIndex) async {
+    if (_roadIndex == roadIndex &&
+        _episodeIndex == episodeIndex &&
+        !_resolving) {
+      return; // 点当前集 no-op
+    }
+    setState(() {
+      _roadIndex = roadIndex;
+      _episodeIndex = episodeIndex;
+    });
+    await _playEpisode();
   }
 }
