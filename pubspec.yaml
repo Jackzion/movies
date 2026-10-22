@@ -59,7 +59,9 @@ dependencies:
   media_kit_libs_windows_video: ^1.0.11
   auto_route: ^11.1.0
   collection: ^1.17.1
+  youtube_explode_dart: ^2.3.5
   dio: ^5.4.0
+  http: ^1.2.0
   intl: ^0.18.1
   json_annotation: ^4.8.1
   lumberdash: ^3.0.0
@@ -75,6 +77,9 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
