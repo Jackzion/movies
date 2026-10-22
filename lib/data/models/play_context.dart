@@ -9,7 +9,7 @@ class PlayContext {
   final String title;
 
   /// 命中的规则（UA/Referer/解析都靠它）
-  final SourceRule rule;
+  final SourceRule? rule;
 
   /// 详情页绝对 URL（调试/回跳用）
   final String detailUrl;
@@ -20,12 +20,12 @@ class PlayContext {
   /// 用户在详情页点的集号（1-based）；Sheet 未指定则为 null
   final int? preferredEpisode;
 
-  const PlayContext({
+  PlayContext({
     required this.animeId,
     required this.title,
-    required this.rule,
     required this.detailUrl,
     required this.roads,
+    this.rule,              // ← 可选命名参数，不传就是 null
     this.preferredEpisode,
   });
 
@@ -53,5 +53,5 @@ class PlayContext {
 
   @override
   String toString() =>
-      'PlayContext(${rule.name} / $title / ${roads.length} 线路)';
+      'PlayContext(${rule?.name} / $title / ${roads.length} 线路)';
 }

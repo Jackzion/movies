@@ -8,6 +8,7 @@ import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_extras.dart';
 import 'package:movies/data/models/anime_trailer.dart';
+import 'package:movies/data/models/play_context.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
@@ -36,7 +37,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   late AnimeViewModel animeViewModel;
   AnimeDetails? animeDetails;
   String? bannerImage;
-  List<AnimeTrailer> videos = [];
+  List<AnimeTrailer> trailerVideos = [];
   List<AnimeCharacter> characters = [];
 
   @override
@@ -119,7 +120,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                       );
                     },
                   ),
-                  if (videos.isNotEmpty) ...[
+                  if (trailerVideos.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.only(left: 16, bottom: 8),
                       child: Text(
@@ -128,13 +129,20 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                       ),
                     ),
                     Trailer(
-                      videos: videos,
+                      videos: trailerVideos,
                       onVideoTap: (video) {
-                        // 预告片：playContext 传 null，走旧 bee.mp4 测试逻辑
+                        final playContext = PlayContext(
+                            animeId: widget.animeId,
+                            title: details.title ?? '',
+                            detailUrl: video.videoUrl,
+                            roads: [],
+                            preferredEpisode: 1,
+                        );
+                        // 预告片：rule 为空 → VideoPage 走 youtube_explode 取流
                         context.router.push(
                           VideoPageRoute(
                             animeVideo: video.youtubeId ?? '',
-                            playContext: null,
+                            playContext: playContext,
                           ),
                         );
                       },
@@ -262,7 +270,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
       animeViewModel.getAnimeCharacters(widget.animeId),
       animeViewModel.getExtras(widget.animeId, nameJa, nameCn),
     ]);
-    videos = results[0] as List<AnimeTrailer>;
+    trailerVideos = results[0] as List<AnimeTrailer>;
     characters = results[1] as List<AnimeCharacter>;
     // 从 extras 中获取 bannerImage（可能为空）
     bannerImage = (results[2] as AnimeExtras).bannerImage;

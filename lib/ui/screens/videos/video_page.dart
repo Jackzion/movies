@@ -9,8 +9,11 @@ import 'package:movies/data/models/source_rule.dart';
 import 'package:movies/network/rule_engine.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/services/video_source/video_source.dart';
+import 'package:movies/services/video_source/webview_video_source_service.dart';
+import 'package:movies/services/video_source/youtube_stream_service.dart';
 import 'package:movies/ui/screens/source_sheet/source_import_dialog.dart';
 import 'package:movies/ui/theme/theme.dart';
+import 'package:movies/utils/system_proxy.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:movies/utils/utils.dart';
@@ -34,6 +37,12 @@ class _VideoPageState extends ConsumerState<VideoPage> {
   late final Player player;
   late final VideoController controller;
 
+  /// YouTube PV 取流（youtube_explode）
+  final YoutubeStreamService _youtubeService = YoutubeStreamService();
+
+  /// 缓存服务，dispose 里不要再碰 ref
+  WebviewVideoSourceService? _webviewService;
+
   /// 当前线路下标（playroads 的 index）
   int _roadIndex = 0;
 
@@ -46,8 +55,8 @@ class _VideoPageState extends ConsumerState<VideoPage> {
   /// 底部/侧栏错误提示（null = 无）
   String? _playError;
 
-  /// 是否正片模式（有 playContext）
-  bool get _isOnlinePlay => widget.playContext != null;
+  /// 是否正片模式（有 playContext 且 rule 不为 null）
+  bool get _isOnlinePlay => widget.playContext?.rule != null;
 
   /// 浏览器打开番剧站某一集的播放页，复制地址栏整段 URL 粘到这里。
   /// 注意：必须是「分集播放页」，不是首页/详情页。
@@ -77,8 +86,8 @@ class _VideoPageState extends ConsumerState<VideoPage> {
     });
 
     final play = widget.playContext;
-    if (play != null) {
-      final indices = play.resolveStartIndices();
+    if (_isOnlinePlay) {
+      final indices = play?.resolveStartIndices();
       if (indices != null) {
         _roadIndex = indices.$1;
         _episodeIndex = indices.$2;
@@ -89,21 +98,70 @@ class _VideoPageState extends ConsumerState<VideoPage> {
         unawaited(_playEpisode());
       });
     } else {
-      // 预告片路径保持不变
-      player.open(
-        Media(
-          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-        ),
-      );
+      // 预告 / PV：youtube_explode 取流 → media_kit
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_playTrailer());
+      });
     }
   }
 
   @override
   void dispose() {
     // 离开播放页：作废在途取流，避免后台继续写状态
-    ref.read(webviewVideoSourceServiceProvider).cancel();
+    // 注意：dispose 时 widget 已 deactivate，不能用 ref
+    _webviewService?.cancel();
     player.dispose();
     super.dispose();
+  }
+
+  /// 预告片：YouTube videoId → 直链 → media_kit
+  Future<void> _playTrailer() async {
+    final idOrUrl = widget.animeVideo.isNotEmpty
+        ? widget.animeVideo
+        : (widget.playContext?.detailUrl ?? '');
+    if (idOrUrl.isEmpty) {
+      setState(() => _playError = '缺少预告片视频 ID');
+      return;
+    }
+
+    setState(() {
+      _resolving = true;
+      _playError = null;
+    });
+
+    try {
+      final source = await _youtubeService.resolve(idOrUrl);
+      debugPrint('[Play] trailer resolved => ${source.url}');
+      if (!mounted) return;
+
+      // 直链签名绑出口 IP：mpv 与解析走同一系统代理
+      final proxy = SystemProxy.resolveMpvHttpProxy();
+      if (proxy != null) {
+        try {
+          final native = player.platform;
+          if (native is NativePlayer) {
+            await native.setProperty('http-proxy', proxy);
+          }
+        } catch (e) {
+          debugPrint('[Play] set http-proxy failed: $e');
+        }
+      }
+
+      await player.open(
+        Media(source.url, httpHeaders: YoutubeStreamService.playbackHeaders),
+        play: true,
+      );
+      if (!mounted) return;
+      setState(() => _resolving = false);
+    } catch (e) {
+      debugPrint('[Play] trailer failed: $e');
+      if (!mounted) return;
+      setState(() {
+        _resolving = false;
+        _playError = '预告片解析失败：$e';
+      });
+    }
   }
 
   /// ===== Phase 1 临时调试：无头 WebView 取流 =====
@@ -273,9 +331,9 @@ class _VideoPageState extends ConsumerState<VideoPage> {
           overflow: TextOverflow.ellipsis,
         ),
       ),
-      body: play == null
+      body: play?.rule == null
           ? _buildTrailerBody()
-          : _buildOnlineBody(play),
+          : _buildOnlineBody(play!),
     );
   }
 
@@ -431,13 +489,58 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
   // 预告 trailer 视频渲染区
   Widget _buildTrailerBody() {
-    // 直接拿 playerContext.detailurl 作为直链即可 - 无需验证是否存在
-    final play = widget.playContext!;
-    final trailerUrl = play.detailUrl;
-    debugPrint('[Play] 解析 trailer → $trailerUrl');
-    return Video(
-      controller: controller,
-      fit: BoxFit.contain,
+    return Container(
+      color: screenBackground,
+      width: double.infinity,
+      height: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Video(
+            controller: controller,
+            fit: BoxFit.contain,
+            controls: (VideoState state) => MaterialVideoControls(state),
+          ),
+          if (_resolving)
+            ColoredBox(
+              color: Colors.black54,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    addVerticalSpace(12),
+                    Text('正在解析预告片…', style: body2Regular),
+                  ],
+                ),
+              ),
+            ),
+          if (_playError != null && !_resolving)
+            ColoredBox(
+              color: Colors.black87,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _playError!,
+                        style: body2Regular,
+                        textAlign: TextAlign.center,
+                      ),
+                      addVerticalSpace(16),
+                      FilledButton(
+                        onPressed: () => unawaited(_playTrailer()),
+                        child: const Text('重试'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -458,6 +561,7 @@ class _VideoPageState extends ConsumerState<VideoPage> {
     }
 
     final service = ref.read(webviewVideoSourceServiceProvider);
+    _webviewService = service;
 
     // 作废上一次解析；
     service.cancel();
@@ -529,8 +633,8 @@ class _VideoPageState extends ConsumerState<VideoPage> {
         'AppleWebKit/537.36 (KHTML, like Gecko) '
         'Chrome/120.0.0.0 Safari/537.36';
     // 从规则中获取 UA / Referer
-    final ua = play.rule.userAgent.trim();
-    final referer = play.rule.referer.trim();
+    final ua = play.rule?.userAgent.trim() ?? fallbackUa;
+    final referer = play.rule?.referer.trim() ?? '';
     return {
       'user-agent': ua.isEmpty ? fallbackUa : ua,
       if (referer.isNotEmpty) 'referer': referer,
