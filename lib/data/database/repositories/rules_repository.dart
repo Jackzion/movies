@@ -121,14 +121,15 @@ class RulesRepository {
       if (existing != null) {
         merged[existing] = r;
         overwriteCount++;
-      } else {}
-      indexByName[r.nameKey] = merged.length;
-      merged.add(r);
-      addCount++;
+      } else {
+        indexByName[r.nameKey] = merged.length;
+        merged.add(r);
+        addCount++;
+      }
     }
 
     await _saveAll(merged);
-        debugPrint(
+    debugPrint(
       '[RulesRepository] merge: +$addCount ~$overwriteCount total=${merged.length}',
     );
     return RuleMergeResult(
