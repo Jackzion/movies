@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/data/database/models/rules_model.dart';
+import 'package:movies/data/models/play_context.dart';
 import 'package:movies/data/models/source_rule.dart';
 import 'package:movies/network/rule_engine.dart';
 import 'package:movies/providers.dart';
@@ -17,7 +18,11 @@ import 'package:media_kit_video/media_kit_video.dart';
 class VideoPage extends ConsumerStatefulWidget {
   /// 视频 ID 或播放地址
   final String animeVideo;
-  const VideoPage(this.animeVideo, {super.key});
+
+  /// 视频播放上下文
+  final PlayContext? playContext;
+
+  const VideoPage(this.animeVideo, this.playContext, {super.key});
   @override
   ConsumerState<VideoPage> createState() => _VideoPageState();
 }
@@ -28,8 +33,7 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
   /// 浏览器打开番剧站某一集的播放页，复制地址栏整段 URL 粘到这里。
   /// 注意：必须是「分集播放页」，不是首页/详情页。
-  static const String _testPageUrl =
-      'https://www.agedm.io/play/20260322/2/1';
+  static const String _testPageUrl = 'https://www.agedm.io/play/20260322/2/1';
 
   /// 解析中标志：避免连点，也方便看按钮状态
   bool _parsing = false;
@@ -49,19 +53,43 @@ class _VideoPageState extends ConsumerState<VideoPage> {
     player.stream.error.listen((String error) {
       debugPrint('Player error: $error');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('视频错误: $error')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('视频错误: $error')));
       }
     });
 
-    // 临时用 .mp4 直链测,先验证 media_kit 在 Windows desktop 上能跑
-    // (bee.mp4 是 Flutter 官方测试视频)
-    player.open(
-      Media(
-        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-      ),
-    );
+    final play = widget.playContext;
+    if (play != null) {
+      // 从上下文解析起始分集页索引
+      final indices = play.resolveStartIndices();
+      if (indices != null) {
+        // 获取播放页 URL
+        final pageUrl = play.episodePageUrl(indices.$1, indices.$2);
+        debugPrint('[VideoPage] 正片上下文 ${play.rule.name} → $pageUrl');
+        // Phase 5：在这里 parseVideoSource(pageUrl) + open
+        // Phase 4：先提示
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '已进入正片：${play.title} / ${play.rule.name}\n'
+                '分集页已就绪（Phase 5 接取流）\n$pageUrl',
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          );
+        });
+      }
+    } else {
+      // 现有预告片测试视频
+      player.open(
+        Media(
+          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+        ),
+      );
+    }
   }
 
   @override
@@ -78,9 +106,7 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
     // SnackBar 的 context 在 await 之后可能失效，先把 messenger 拿在手里
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('开始解析（最多等 10 秒）…')),
-    );
+    messenger.showSnackBar(const SnackBar(content: Text('开始解析（最多等 10 秒）…')));
 
     try {
       final service = ref.read(webviewVideoSourceServiceProvider);
@@ -120,9 +146,7 @@ class _VideoPageState extends ConsumerState<VideoPage> {
     setState(() => _ruleTesting = true);
 
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Phase3：从仓库读规则并搜索…')),
-    );
+    messenger.showSnackBar(const SnackBar(content: Text('Phase3：从仓库读规则并搜索…')));
 
     try {
       final repo = await ref.read(rulesRepositoryProvider.future);
@@ -131,9 +155,7 @@ class _VideoPageState extends ConsumerState<VideoPage> {
 
       if (rules.isEmpty) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('还没有规则：先 ⋮ → Sources → Import'),
-          ),
+          const SnackBar(content: Text('还没有规则：先 ⋮ → Sources → Import')),
         );
         // 空库时直接弹导入框，方便验收
         if (mounted) {
@@ -231,12 +253,17 @@ class _VideoPageState extends ConsumerState<VideoPage> {
       appBar: AppBar(
         backgroundColor: screenBackground,
         // 教程这里写的是空函数 () {},按下没反应。改成 maybePop 真正返回上一页
-          leading: BackButton(
-            color: Colors.white,
-            onPressed: () => context.router.maybePop(),
-          ),
+        leading: BackButton(
+          color: Colors.white,
+          onPressed: () => context.router.maybePop(),
+        ),
         centerTitle: false,
-        title: Text('Back', style: Theme.of(context).textTheme.headlineMedium),
+        title: Text(
+          widget.playContext?.title ?? 'Back',
+          style: Theme.of(context).textTheme.headlineMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: Container(
         width: double.infinity,

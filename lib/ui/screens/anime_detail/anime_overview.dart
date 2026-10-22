@@ -14,9 +14,17 @@ class AnimeOverview extends StatefulWidget {
   /// 兼容旧参数（新布局不再使用上移重叠）
   final double overlapHeight;
 
+  /// 点章节:(1-based 集号) 回调
+  final void Function(int episode)? onEpisodeTap;
+
+  /// 「开始观看」等：不带集号
+  final VoidCallback? onWatchTap;
+
   const AnimeOverview({
     super.key,
     required this.details,
+    this.onEpisodeTap,
+    this.onWatchTap,
     this.overlapHeight = 0,
   });
 
@@ -34,10 +42,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
   late final Animation<Offset> _offsetAnimation = Tween<Offset>(
     begin: const Offset(1.0, 0.0),
     end: Offset.zero,
-  ).animate(CurvedAnimation(
-    parent: _controller,
-    curve: Curves.elasticOut,
-  ));
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
   bool _expandedChapters = false;
   bool _expandedTags = false;
@@ -69,11 +74,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
           addVerticalSpace(16),
         ],
 
-        const Divider(
-          height: 1,
-          thickness: 1,
-          color: Color(0xFF3D3D3D),
-        ),
+        const Divider(height: 1, thickness: 1, color: Color(0xFF3D3D3D)),
         addVerticalSpace(18),
 
         if (synopsisLines.isNotEmpty)
@@ -82,10 +83,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
             addVerticalSpace(4),
           ],
 
-        if (genres.isNotEmpty) ...[
-          addVerticalSpace(14),
-          _buildTagBox(genres),
-        ],
+        if (genres.isNotEmpty) ...[addVerticalSpace(14), _buildTagBox(genres)],
       ],
     );
   }
@@ -116,6 +114,17 @@ class _AnimeOverviewState extends State<AnimeOverview>
             ),
           ),
         ],
+        const Spacer(),
+        GestureDetector(
+          onTap: widget.onWatchTap,
+          child: Text(
+            '开始观看 ›',
+            style: GoogleFonts.notoSansSc(
+              fontSize: 15,
+              color: const Color(0xFF6FB0E8),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -129,7 +138,10 @@ class _AnimeOverviewState extends State<AnimeOverview>
       runSpacing: 6,
       children: [
         for (var n = 1; n <= shown; n++)
-          _ChapterButton(label: _pad(n), onTap: () {}),
+          _ChapterButton(
+            label: _pad(n),
+            onTap: () => widget.onEpisodeTap?.call(n),
+          ),
       ],
     );
   }
@@ -216,11 +228,7 @@ class _ChapterButton extends StatelessWidget {
             gradient: const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF58A3E4),
-                Color(0xFF3B7FC0),
-                Color(0xFF2F6DAD),
-              ],
+              colors: [Color(0xFF58A3E4), Color(0xFF3B7FC0), Color(0xFF2F6DAD)],
               stops: [0.0, 0.52, 1.0],
             ),
             borderRadius: BorderRadius.circular(6),

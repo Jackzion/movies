@@ -16,6 +16,7 @@ import 'package:movies/ui/screens/anime_detail/button_row.dart';
 import 'package:movies/ui/screens/anime_detail/detail_banner.dart';
 import 'package:movies/ui/screens/anime_detail/detail_image.dart';
 import 'package:movies/ui/screens/anime_detail/trailer.dart';
+import 'package:movies/ui/screens/source_sheet/source_sheet.dart';
 import 'package:movies/ui/widgets/horiz_cast.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
 import 'package:movies/utils/utils.dart';
@@ -72,7 +73,9 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
 
   Widget buildDetailScreen() {
     final details = animeDetails!;
-    final favoriteNotifier = ValueNotifier<bool>(animeViewModel.isFavorite(widget.animeId));
+    final favoriteNotifier = ValueNotifier<bool>(
+      animeViewModel.isFavorite(widget.animeId),
+    );
 
     return SafeArea(
       child: Scaffold(
@@ -97,10 +100,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
               SliverList(
                 delegate: SliverChildListDelegate([
                   // 顶部渐进色背景：图源 bannerImage（animeId 对应 AniList）
-                  DetailBanner(
-                    details: details,
-                    bannerImage: bannerImage,
-                  ),
+                  DetailBanner(details: details, bannerImage: bannerImage),
                   // 左完整 detail.image + 元信息；右章节/简介/标签
                   _buildPosterAndOverview(details),
                   ValueListenableBuilder<bool>(
@@ -109,8 +109,12 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                       return ButtonRow(
                         favoriteSelected: favoriteNotifier.value,
                         onFavoriteSelected: () async {
-                          await animeViewModel.toggleFavorite(Anime(bangumiId: widget.animeId));
-                          favoriteNotifier.value = animeViewModel.isFavorite(widget.animeId);
+                          await animeViewModel.toggleFavorite(
+                            Anime(bangumiId: widget.animeId),
+                          );
+                          favoriteNotifier.value = animeViewModel.isFavorite(
+                            widget.animeId,
+                          );
                         },
                       );
                     },
@@ -126,16 +130,23 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                     Trailer(
                       videos: videos,
                       onVideoTap: (video) {
+                        // 预告片：playContext 传 null，走旧 bee.mp4 测试逻辑
                         context.router.push(
-                          VideoPageRoute(animeVideo: video.youtubeId ?? ''),
+                          VideoPageRoute(
+                            animeVideo: video.youtubeId ?? '',
+                            playContext: null,
+                          ),
                         );
                       },
                     ),
                   ],
                   if (characters.isNotEmpty) ...[
                     Padding(
-                      padding:
-                          const EdgeInsets.only(left: 16, bottom: 16, top: 16),
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        bottom: 16,
+                        top: 16,
+                      ),
                       child: Text(
                         'Characters',
                         style: Theme.of(context).textTheme.headlineLarge,
@@ -160,7 +171,12 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
     final isWide = width >= 780;
 
     final posterAndMeta = _buildPosterColumn(details, isWide: isWide);
-    final overview = AnimeOverview(details: details);
+    final overview = AnimeOverview(
+      details: details,
+      // 子组件函数外抛，能让父组件直接调用子组件交互参数典例
+      onEpisodeTap: (ep) => _openSourceSheet(details, preferredEpisode: ep),
+      onWatchTap: () => _openSourceSheet(details, preferredEpisode: null),
+    );
 
     if (!isWide) {
       return Padding(
@@ -182,10 +198,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ===== LEFT : 完整 detail.image 海报 + 元信息 =====
-          SizedBox(
-            width: 240,
-            child: posterAndMeta,
-          ),
+          SizedBox(width: 240, child: posterAndMeta),
           addHorizontalSpace(28),
           // ===== RIGHT : 章节 / 简介 / 标签 =====
           Expanded(
@@ -200,10 +213,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   }
 
   /// 左侧列：完整 detail.image 海报 + 中文名 / 话数
-  Widget _buildPosterColumn(
-    AnimeDetails details, {
-    required bool isWide,
-  }) {
+  Widget _buildPosterColumn(AnimeDetails details, {required bool isWide}) {
     final posterWidth = isWide ? 240.0 : 200.0;
 
     return Column(
@@ -256,6 +266,42 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
     characters = results[1] as List<AnimeCharacter>;
     // 从 extras 中获取 bannerImage（可能为空）
     bannerImage = (results[2] as AnimeExtras).bannerImage;
+  }
+
+  /// 打开视频源选择器
+  Future<void> _openSourceSheet(
+    AnimeDetails details, {
+    int? preferredEpisode,
+  }) async {
+    // 关键词：优先中文标题，无则日文
+    final keyword = (details.title?.isNotEmpty ?? false)
+        ? details.title!
+        : (details.titleJapanese ?? '');
+    // 缺少可用的搜索关键词
+    if (keyword.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('缺少可用的搜索关键词')));
+      return;
+    }
+    // 打开视频源选择器 - showSourceSheet
+    final playContext = await showSourceSheet(
+      context,
+      keyword: keyword,
+      animeId: details.bangumiId,
+      animeTitle: details.title ?? keyword,
+      preferredEpisode: preferredEpisode,
+    );
+
+    if (playContext == null || !mounted) return; // 用户取消
+
+    // Phase 4：先打印；Phase 5 换成完整播放
+    debugPrint('[Phase4] PlayContext => $playContext');
+
+    // 拿到 playContext 后，跳转到视频播放页面
+    // 参数由 page auto route 自动解析 ， dart run build_runner build --delete-conflicting-outputs
+    context.router.push(
+      VideoPageRoute(animeVideo: '', playContext: playContext),
+    );
   }
 }
 

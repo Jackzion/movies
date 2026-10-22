@@ -126,11 +126,16 @@ class MainRoute extends PageRouteInfo<void> {
 class VideoPageRoute extends PageRouteInfo<VideoPageRouteArgs> {
   VideoPageRoute({
     required String animeVideo,
+    required PlayContext? playContext,
     Key? key,
     List<PageRouteInfo>? children,
   }) : super(
          VideoPageRoute.name,
-         args: VideoPageRouteArgs(animeVideo: animeVideo, key: key),
+         args: VideoPageRouteArgs(
+           animeVideo: animeVideo,
+           playContext: playContext,
+           key: key,
+         ),
          initialChildren: children,
        );
 
@@ -140,30 +145,38 @@ class VideoPageRoute extends PageRouteInfo<VideoPageRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<VideoPageRouteArgs>();
-      return VideoPage(args.animeVideo, key: args.key);
+      return VideoPage(args.animeVideo, args.playContext, key: args.key);
     },
   );
 }
 
 class VideoPageRouteArgs {
-  const VideoPageRouteArgs({required this.animeVideo, this.key});
+  const VideoPageRouteArgs({
+    required this.animeVideo,
+    required this.playContext,
+    this.key,
+  });
 
   final String animeVideo;
+
+  final PlayContext? playContext;
 
   final Key? key;
 
   @override
   String toString() {
-    return 'VideoPageRouteArgs{animeVideo: $animeVideo, key: $key}';
+    return 'VideoPageRouteArgs{animeVideo: $animeVideo, playContext: $playContext, key: $key}';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! VideoPageRouteArgs) return false;
-    return animeVideo == other.animeVideo && key == other.key;
+    return animeVideo == other.animeVideo &&
+        playContext == other.playContext &&
+        key == other.key;
   }
 
   @override
-  int get hashCode => animeVideo.hashCode ^ key.hashCode;
+  int get hashCode => animeVideo.hashCode ^ playContext.hashCode ^ key.hashCode;
 }
