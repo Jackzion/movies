@@ -55,6 +55,7 @@ lib/
 
 ```bash
 flutter pub get
+dart run tool/sync_web_assets.dart   # 同步 Web 端 Drift 资源到 web/
 
 flutter run                 # 默认设备
 flutter run -d chrome       # Web
@@ -70,10 +71,16 @@ flutter pub run build_runner build
 
 ### Web 说明
 
-`web/` 下需包含（已入库）：
+Web 端 Drift 依赖两个静态资源：
 
-- `sqlite3.wasm` — 浏览器里的 SQLite（WASM）
-- `drift_worker.js` — Drift 后台 worker
+- `web/sqlite3.wasm` — 浏览器里的 SQLite（WASM）
+- `web/drift_worker.js` — Drift 后台 worker
+
+从 pub 缓存同步（`pub get` 后执行一次，升级 `drift` 后建议再跑）：
+
+```bash
+dart run tool/sync_web_assets.dart
+```
 
 `AnimeDatabase` 通过 `driftDatabase` + `DriftWebOptions` 自动切换原生 / Web。
 

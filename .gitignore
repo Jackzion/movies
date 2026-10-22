@@ -49,3 +49,7 @@ app.*.map.json
 
 # 本地文档/教程
 /docs/
+
+# Web 端 Drift 资源：由 tool/sync_web_assets.dart 从 pub 缓存同步，不入库
+/web/drift_worker.js
+/web/sqlite3.wasm
