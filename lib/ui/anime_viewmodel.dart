@@ -8,7 +8,7 @@ import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_extras.dart';
-import 'package:movies/data/models/anime_video.dart';
+import 'package:movies/data/models/anime_trailer.dart';
 import 'package:movies/data/models/genre.dart';
 import 'package:movies/network/anilist_api_service.dart';
 import 'package:movies/network/bangumi_api_service.dart';
@@ -317,8 +317,8 @@ class AnimeViewModel {
     }
   }
 
-  /// 获取动漫 PV 列表（来自 AniList，可能为空）
-  Future<List<AnimeVideo>> getAnimeVideos(int animeId) async {
+  /// 获取动漫预告片 / PV 列表（来自 AniList，可能为空）
+  Future<List<AnimeTrailer>> getAnimeTrailers(int animeId) async {
     String? nameJa;
     String? nameCn;
     final anime = findAnimeById(animeId);
@@ -331,11 +331,18 @@ class AnimeViewModel {
       nameCn = details?.title;
     }
     final extras = await getExtras(animeId, nameJa, nameCn);
-    final youtubeId = extras.youtubeId;
-    if (youtubeId == null || youtubeId.isEmpty) {
+    final videoId = extras.youtubeId;
+    if (videoId == null || videoId.isEmpty) {
       return [];
     }
-    return [AnimeVideo(title: 'PV', youtubeId: youtubeId)];
+    return [
+      AnimeTrailer(
+        title: 'PV',
+        youtubeId: videoId,
+        site: extras.trailerSite,
+        imageUrl: extras.trailerThumbnail,
+      ),
+    ];
   }
 
   /// 获取动漫角色和声优列表
@@ -494,13 +501,12 @@ class AnimeViewModel {
       }
       final trailer = media['trailer'] as Map<String, dynamic>?;
       final site = trailer?['site'] as String?;
-      String? youtubeId;
-      if (site == null || site == 'youtube') {
-        youtubeId = trailer?['id'] as String?;
-      }
+      final videoId = trailer?['id'] as String?;
       return AnimeExtras(
         bannerImage: media['bannerImage'] as String?,
-        youtubeId: youtubeId,
+        youtubeId: (videoId == null || videoId.isEmpty) ? null : videoId,
+        trailerSite: site,
+        trailerThumbnail: trailer?['thumbnail'] as String?,
       );
     } catch (e) {
       logError('Error searching AniList: $e');

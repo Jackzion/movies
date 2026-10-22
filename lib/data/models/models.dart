@@ -6,6 +6,6 @@ export 'anime.dart';
 export 'anime_character.dart';
 export 'anime_details.dart';
 export 'anime_extras.dart';
-export 'anime_video.dart';
+export 'anime_trailer.dart';
 export 'genre.dart';
 export 'genre_state.dart';

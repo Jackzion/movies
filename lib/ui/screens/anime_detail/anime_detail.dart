@@ -7,7 +7,7 @@ import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_extras.dart';
-import 'package:movies/data/models/anime_video.dart';
+import 'package:movies/data/models/anime_trailer.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/router/app_routes.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
@@ -36,7 +36,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   late AnimeViewModel animeViewModel;
   AnimeDetails? animeDetails;
   String? bannerImage;
-  List<AnimeVideo> videos = [];
+  List<AnimeTrailer> videos = [];
   List<AnimeCharacter> characters = [];
 
   @override
@@ -258,11 +258,11 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
     }
 
     final results = await Future.wait([
-      animeViewModel.getAnimeVideos(widget.animeId),
+      animeViewModel.getAnimeTrailers(widget.animeId),
       animeViewModel.getAnimeCharacters(widget.animeId),
       animeViewModel.getExtras(widget.animeId, nameJa, nameCn),
     ]);
-    videos = results[0] as List<AnimeVideo>;
+    videos = results[0] as List<AnimeTrailer>;
     characters = results[1] as List<AnimeCharacter>;
     // 从 extras 中获取 bannerImage（可能为空）
     bannerImage = (results[2] as AnimeExtras).bannerImage;

@@ -1,16 +1,16 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:movies/data/models/anime_video.dart';
+import 'package:movies/data/models/anime_trailer.dart';
 import 'package:movies/utils/utils.dart';
 
 /// 动漫预告片列表组件
 /// 横向滚动展示预告片缩略图，点击后触发回调
 class Trailer extends StatelessWidget {
   /// 预告片视频列表
-  final List<AnimeVideo> videos;
+  final List<AnimeTrailer> videos;
   /// 预告片点击回调
-  final OnAnimeVideoTap onVideoTap;
+  final OnAnimeTrailerTap onVideoTap;
 
   const Trailer({required this.videos, required this.onVideoTap, super.key});
 

@@ -3,6 +3,7 @@ import 'package:movies/data/models/anime.dart';
 import 'package:movies/data/models/anime_character.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/anime_extras.dart';
+import 'package:movies/data/models/anime_trailer.dart';
 
 void main() {
   group('Anime.fromBangumi', () {
@@ -125,10 +126,48 @@ void main() {
       const extras = AnimeExtras(
         bannerImage: 'https://s4.anilist.co/banner.jpg',
         youtubeId: 'tR8YH0G67Rk',
+        trailerSite: 'youtube',
+        trailerThumbnail: 'https://i.ytimg.com/vi/tR8YH0G67Rk/hqdefault.jpg',
       );
       final restored = AnimeExtras.fromJson(extras.toJson());
       expect(restored.bannerImage, 'https://s4.anilist.co/banner.jpg');
       expect(restored.youtubeId, 'tR8YH0G67Rk');
+      expect(restored.trailerSite, 'youtube');
+      expect(
+        restored.trailerThumbnail,
+        'https://i.ytimg.com/vi/tR8YH0G67Rk/hqdefault.jpg',
+      );
+    });
+  });
+
+  group('AnimeTrailer', () {
+    test('AniList trailer 解析与直链拼接', () {
+      final trailer = AnimeTrailer.fromAniList({
+        'id': 'OhNwckCLzis',
+        'site': 'youtube',
+        'thumbnail': 'https://i.ytimg.com/vi/OhNwckCLzis/hqdefault.jpg',
+      });
+      expect(trailer.youtubeId, 'OhNwckCLzis');
+      expect(trailer.site, 'youtube');
+      expect(trailer.imageUrl, 'https://i.ytimg.com/vi/OhNwckCLzis/hqdefault.jpg');
+      expect(trailer.videoUrl, 'https://www.youtube.com/watch?v=OhNwckCLzis');
+      expect(trailer.thumbnailUrl, 'https://i.ytimg.com/vi/OhNwckCLzis/hqdefault.jpg');
+    });
+
+    test('无远端缩略图时按 YouTube ID 拼 hqdefault', () {
+      const trailer = AnimeTrailer(title: 'PV', youtubeId: 'abc123');
+      expect(trailer.thumbnailUrl, 'https://img.youtube.com/vi/abc123/hqdefault.jpg');
+      expect(trailer.videoUrl, 'https://www.youtube.com/watch?v=abc123');
+    });
+
+    test('Dailymotion 源走 dailymotion 链接', () {
+      const trailer = AnimeTrailer(
+        title: 'PV',
+        youtubeId: 'x7tdf0k',
+        site: 'dailymotion',
+      );
+      expect(trailer.isDailymotion, isTrue);
+      expect(trailer.videoUrl, 'https://www.dailymotion.com/video/x7tdf0k');
     });
   });
 }

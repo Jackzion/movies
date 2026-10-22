@@ -37,6 +37,7 @@ query ($search: String) {
     trailer {
       id
       site
+      thumbnail
     }
   }
 }
