@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumberdash/lumberdash.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:movies/providers.dart';
+import 'package:movies/ui/search/global_search_scope.dart';
 import 'package:movies/ui/theme/theme.dart';
 import 'package:movies/utils/system_proxy.dart';
 import 'package:movies/utils/utils.dart';
@@ -51,6 +52,12 @@ class _MainAppState extends ConsumerState<MainApp> {
       title: 'Tiara',
       debugShowCheckedModeBanner: false,
       theme: createTheme(),
+      // 全局搜索：包在路由子树外，Idle 吃可打印键 / Ctrl+K 唤起 Overlay
+      builder: (context, child) {
+        return GlobalSearchScope(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }
