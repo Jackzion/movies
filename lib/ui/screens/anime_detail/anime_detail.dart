@@ -21,6 +21,7 @@ import 'package:movies/ui/screens/source_sheet/source_sheet.dart';
 import 'package:movies/ui/widgets/horiz_cast.dart';
 import 'package:movies/ui/widgets/not_ready.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 动漫详情页面
 /// 顶部 bannerImage 渐进色背景；下方左完整 detail.image 海报+元信息，右章节/简介/标签
@@ -81,7 +82,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2B2B2B),
+          backgroundColor: searchBarBackground,
           leading: BackButton(
             color: Colors.white,
             onPressed: () {
@@ -95,7 +96,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
           ),
         ),
         body: Container(
-          color: const Color(0xFF2B2B2B),
+          color: searchBarBackground,
           child: CustomScrollView(
             slivers: [
               SliverList(
@@ -330,7 +331,7 @@ class _MetaLine extends StatelessWidget {
           style: GoogleFonts.notoSansSc(
             fontSize: 14,
             height: 1.9,
-            color: const Color(0xFFB9B9B9),
+            color: posterBorder,
           ),
         ),
         const SizedBox(width: 8),
@@ -340,7 +341,7 @@ class _MetaLine extends StatelessWidget {
             style: GoogleFonts.notoSansSc(
               fontSize: 14,
               height: 1.9,
-              color: const Color(0xFFB9B9B9),
+              color: posterBorder,
             ),
           ),
         ),

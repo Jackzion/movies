@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movies/utils/utils.dart';
 import 'package:movies/ui/widgets/text_icon.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 收藏按钮点击回调类型
 typedef OnFavoriteSelected = void Function();
@@ -63,7 +64,7 @@ class _ButtonRowState extends State<ButtonRow> with TickerProviderStateMixin {
     // 创建颜色动画，从白色到红色
     _colorAnimation = ColorTween(
       begin: Colors.white,
-      end: Colors.red,
+      end: dangerRed,
     ).animate(
       CurvedAnimation(parent: _colorController, curve: Curves.easeInOut),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/providers.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 动漫详情页左侧完整海报
 /// 展示完整封面 detail.image（主视觉），不做标题叠字；元信息放在海报下方
@@ -59,7 +60,7 @@ class _DetailImageState extends ConsumerState<DetailImage>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(2),
         child: ColoredBox(
-          color: const Color(0xFF232323),
+          color: buttonGrey,
           child: Hero(
             tag: heroTag,
             child: FadeTransition(
@@ -71,12 +72,12 @@ class _DetailImageState extends ConsumerState<DetailImage>
                 width: double.infinity,
                 height: double.infinity,
                 placeholder: (context, url) => const ColoredBox(
-                  color: Color(0xFF232323),
+                  color: buttonGrey,
                 ),
                 errorWidget: (context, url, error) => const ColoredBox(
-                  color: Color(0xFF232323),
+                  color: buttonGrey,
                   child: Center(
-                    child: Icon(Icons.broken_image, color: Color(0xFF666666)),
+                    child: Icon(Icons.broken_image, color: iconPlaceholder),
                   ),
                 ),
               ),

@@ -51,7 +51,7 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
                           height: 16,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.red,
+                            color: dangerRed,
                           ),
                           child: Center(
                             child: Text(
@@ -99,8 +99,11 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
     return List<Widget>.generate(widget.genreStates.length, (index) {
       final genreState = widget.genreStates[index];
       return FilterChip(
-        backgroundColor: const Color(0xFF2A2A2A),
-        selectedColor: buttonGrey,
+        backgroundColor: buttonGrey,
+        selectedColor: accentAmber,
+        labelStyle: TextStyle(
+          color: genreState.isSelected ? onAccent : Colors.white,
+        ),
         label: Text(
           genreState.genre.name,
           style: Theme.of(context).textTheme.labelSmall,

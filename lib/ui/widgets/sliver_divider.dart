@@ -8,7 +8,7 @@ class SliverDivider extends StatelessWidget {
     return const SliverPadding(
       padding: EdgeInsets.only(left: 16, top: 8, right: 16, bottom: 8),
       sliver: SliverToBoxAdapter(
-        child: Divider(color: primaryButton, thickness: 1.0),
+        child: Divider(color: dividerLine, thickness: 1.0),
       ),
     );
   }

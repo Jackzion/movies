@@ -468,13 +468,15 @@ class _VideoPageState extends ConsumerState<VideoPage> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: selected
-                          ? const Color(0xFF3B7FC0)
-                          : const Color(0xFF343434),
+                          ? accentAmber
+                          : buttonGrey,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       _episodeDisplayName(play, _roadIndex, i),
-                      style: body3Regular,
+                      style: body3Regular.copyWith(
+                        color: selected ? onAccent : Colors.white,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),

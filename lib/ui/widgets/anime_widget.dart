@@ -5,6 +5,7 @@ import 'package:movies/data/models/anime.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 动漫类型枚举，用于区分不同分类的动漫
 /// 用于生成唯一的 Hero 动画标签
@@ -163,7 +164,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
-                    ?.copyWith(color: const Color(0xFF9CA3AF)),
+                    ?.copyWith(color: posterBorder),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -247,7 +248,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
-                        ?.copyWith(color: const Color(0xFF9CA3AF)),
+                        ?.copyWith(color: posterBorder),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -333,7 +334,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
         style: Theme.of(context)
             .textTheme
             .labelSmall
-            ?.copyWith(color: const Color(0xFFFFC107)),
+            ?.copyWith(color: accentAmberLight),
       ),
     );
   }
@@ -359,7 +360,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
             ),
             child: Icon(
               favoriteSelected ? Icons.favorite : Icons.favorite_border,
-              color: favoriteSelected ? const Color(0xFFFF4757) : Colors.white,
+              color: favoriteSelected ? dangerRed : Colors.white,
               size: 20,
             ),
           ),
@@ -375,12 +376,12 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
             width: 40,
             height: 40,
             decoration: const BoxDecoration(
-              color: Color(0xFF3B82F6),
+              color: accentAmber,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.play_arrow_rounded,
-              color: Colors.white,
+              color: onAccent,
               size: 24,
             ),
           ),
@@ -397,7 +398,7 @@ class _AnimeWidgetState extends ConsumerState<AnimeWidget> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF374151), Color(0xFF111827)],
+          colors: [buttonGrey, surfaceBar],
         ),
       ),
       padding: const EdgeInsets.all(20),

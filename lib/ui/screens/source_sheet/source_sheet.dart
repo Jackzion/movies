@@ -310,7 +310,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                 padding: const EdgeInsets.only(left: 4, bottom: 8),
                 child: Text(
                   '错误：${row.errorMessage ?? '未知'}',
-                  style: body3Regular.copyWith(color: Colors.redAccent),
+                  style: body3Regular.copyWith(color: dangerRed),
                 ),
               ),
             SourceSearchStatus.success => Column(
@@ -353,10 +353,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      SourceSearchStatus.pending => ('搜索中', Colors.orangeAccent),
-      SourceSearchStatus.success => ('可用', Colors.greenAccent),
+      SourceSearchStatus.pending => ('搜索中', accentAmber),
+      SourceSearchStatus.success => ('可用', successGreen),
       SourceSearchStatus.empty => ('空', buttonGrey),
-      SourceSearchStatus.error => ('失败', Colors.redAccent),
+      SourceSearchStatus.error => ('失败', dangerRed),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

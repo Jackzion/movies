@@ -9,6 +9,7 @@ import 'package:movies/data/models/anime.dart';
 import 'package:movies/providers.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 轮播图自动播放延迟时间（毫秒）
 const delayTime = 1000 * 5;
@@ -248,14 +249,14 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
     return Row(
       children: [
         if (anime.score != null) ...[
-          const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 20),
+          const Icon(Icons.star_rounded, color: accentAmberLight, size: 20),
           addHorizontalSpace(4),
           Text(
             anime.score!.toStringAsFixed(1),
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
-                ?.copyWith(color: const Color(0xFFFFC107)),
+                ?.copyWith(color: accentAmberLight),
           ),
         ],
         if (meta.isNotEmpty) ...[
@@ -289,7 +290,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
         ),
         child: const Icon(
           Icons.play_arrow_rounded,
-          color: Color(0xFF333333),
+          color: buttonGrey,
           size: 30,
         ),
       ),
@@ -311,7 +312,7 @@ class _HomeScreenImageState extends ConsumerState<HomeScreenImage> {
         child: Icon(
           favoriteSelected ? Icons.favorite : Icons.favorite_border,
           color:
-              favoriteSelected ? const Color(0xFFFF4757) : const Color(0xFF333333),
+              favoriteSelected ? dangerRed : buttonGrey,
           size: 24,
         ),
       ),

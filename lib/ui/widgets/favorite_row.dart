@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:movies/data/database/models/database_models.dart';
 import 'package:movies/utils/utils.dart';
 import 'package:movies/ui/anime_viewmodel.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 收藏动漫行展示组件
 class FavoriteRow extends StatelessWidget {
@@ -43,7 +44,7 @@ class FavoriteRow extends StatelessWidget {
                       height: 140,
                       width: 100,
                     )
-                  : const ColoredBox(color: Color(0xFF374151)),
+                  : const ColoredBox(color: buttonGrey),
             ),
             addHorizontalSpace(16),
             Expanded(
@@ -57,7 +58,7 @@ class FavoriteRow extends StatelessWidget {
                       icon: favorite.favorite
                           ? const Icon(
                               Icons.favorite_outlined,
-                              color: Colors.red,
+                              color: dangerRed,
                             )
                           : const Icon(
                               Icons.favorite_border,

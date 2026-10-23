@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/data/models/genre.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 动漫简介右栏组件
 /// 参考 Bangumi 详情页右侧：章节按钮 + 简介 + 标签胶囊
@@ -74,7 +75,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
           addVerticalSpace(16),
         ],
 
-        const Divider(height: 1, thickness: 1, color: Color(0xFF3D3D3D)),
+        const Divider(height: 1, thickness: 1, color: dividerLine),
         addVerticalSpace(18),
 
         if (synopsisLines.isNotEmpty)
@@ -98,7 +99,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
           '章节列表',
           style: GoogleFonts.notoSansSc(
             fontSize: 15,
-            color: const Color(0xFFC9C9C9),
+            color: textSoft,
           ),
         ),
         if (showToggle) ...[
@@ -109,7 +110,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
               _expandedChapters ? '[收起]' : '[全部]',
               style: GoogleFonts.notoSansSc(
                 fontSize: 15,
-                color: const Color(0xFF6FB0E8),
+                color: accentAmber,
               ),
             ),
           ),
@@ -121,7 +122,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
             '开始观看 ›',
             style: GoogleFonts.notoSansSc(
               fontSize: 15,
-              color: const Color(0xFF6FB0E8),
+              color: accentAmber,
             ),
           ),
         ),
@@ -157,7 +158,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 13, 14, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF343434),
+        color: buttonGrey,
         borderRadius: BorderRadius.circular(3),
       ),
       child: Column(
@@ -168,7 +169,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
             style: GoogleFonts.notoSansSc(
               fontSize: 14,
               height: 1.95,
-              color: const Color(0xFF9C9C9C),
+              color: posterBorder,
             ),
           ),
           addVerticalSpace(13),
@@ -228,7 +229,7 @@ class _ChapterButton extends StatelessWidget {
             gradient: const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF58A3E4), Color(0xFF3B7FC0), Color(0xFF2F6DAD)],
+              colors: [accentAmberLight, accentAmber, accentAmberDeep],
               stops: [0.0, 0.52, 1.0],
             ),
             borderRadius: BorderRadius.circular(6),
@@ -247,7 +248,7 @@ class _ChapterButton extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
-                color: Colors.white,
+                color: onAccent,
               ),
             ),
           ),
@@ -269,7 +270,7 @@ class _TagPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFF4B4B4B),
+        color: buttonGrey,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -280,7 +281,7 @@ class _TagPill extends StatelessWidget {
             style: GoogleFonts.notoSansSc(
               fontSize: 13,
               height: 1,
-              color: const Color(0xFFE4E4E4),
+              color: textSoft,
             ),
           ),
           if (count != null) ...[
@@ -290,7 +291,7 @@ class _TagPill extends StatelessWidget {
               style: GoogleFonts.notoSansSc(
                 fontSize: 11,
                 height: 1,
-                color: const Color(0xFFA5A5A5),
+                color: posterBorder,
               ),
             ),
           ],
@@ -314,7 +315,7 @@ class _DescText extends StatelessWidget {
         fontSize: 15,
         height: 2,
         letterSpacing: 0.3,
-        color: const Color(0xFF8F8F8F),
+        color: posterBorder,
       ),
     );
   }

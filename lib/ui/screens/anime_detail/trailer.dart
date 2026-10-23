@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:movies/data/models/anime_trailer.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 动漫预告片列表组件
 /// 横向滚动展示预告片缩略图，点击后触发回调
@@ -42,7 +43,7 @@ class Trailer extends StatelessWidget {
                     placeholder: (context, url) => Container(
                       height: 80,
                       width: 150,
-                      color: Colors.grey.shade800,
+                      color: buttonGrey,
                       child: const Center(
                         child: SizedBox(
                           width: 20,
@@ -54,7 +55,7 @@ class Trailer extends StatelessWidget {
                     errorWidget: (context, url, error) => Container(
                       height: 80,
                       width: 150,
-                      color: Colors.grey.shade800,
+                      color: buttonGrey,
                       child: const Icon(
                         Icons.movie_creation_outlined,
                         color: Colors.white54,

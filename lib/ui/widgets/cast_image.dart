@@ -55,7 +55,7 @@ class CastImage extends StatelessWidget {
     } else {
       return const CircleAvatar(
         backgroundColor: buttonGrey,
-        child: Icon(Icons.person, size: 76.0, color: Colors.black),
+        child: Icon(Icons.person, size: 76.0, color: posterBorder),
       );
     }
   }

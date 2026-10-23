@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movies/data/models/anime_details.dart';
 import 'package:movies/utils/utils.dart';
+import 'package:movies/ui/theme/theme.dart';
 
 /// 动漫详情页顶部渐进色背景横幅
 /// 图源优先 AniList bannerImage（按 animeId 补充），缺失时回退条目封面
@@ -79,10 +80,10 @@ class _DetailBannerState extends ConsumerState<DetailBanner>
                   height: imageHeight,
                   width: double.infinity,
                   placeholder: (context, url) => const ColoredBox(
-                    color: Color(0xFF232323),
+                    color: buttonGrey,
                   ),
                   errorWidget: (context, url, error) => const ColoredBox(
-                    color: Color(0xFF232323),
+                    color: buttonGrey,
                   ),
                 ),
               ),
@@ -96,9 +97,9 @@ class _DetailBannerState extends ConsumerState<DetailBanner>
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      const Color(0x002B2B2B),
-                      const Color(0xB32B2B2B),
-                      const Color(0xFF2B2B2B),
+                      searchBarBackground.withValues(alpha: 0),
+                      searchBarBackground.withValues(alpha: 0.7),
+                      searchBarBackground,
                     ],
                     stops: const [0.0, 0.4, 0.75, 1.0],
                   ),
