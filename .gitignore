@@ -53,3 +53,10 @@ app.*.map.json
 # Web ç«¯ Drift èµ„æºï¼šç”± tool/sync_web_assets.dart ä» pub ç¼“å­˜åŒæ­¥ï¼Œä¸å…¥åº“
 /web/drift_worker.js
 /web/sqlite3.wasm
+
+# flutter_launcher_icons Éú³É²úÎï£¨±¾µØÖ´ĞĞ dart run flutter_launcher_icons£©
+/android/app/src/main/res/mipmap-*/ic_launcher.png
+/android/app/src/main/res/mipmap-*/*.webp
+/windows/runner/resources/app_icon.ico
+/web/favicon.png
+/web/icons/Icon-*.png

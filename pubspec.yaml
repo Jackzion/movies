@@ -94,9 +94,24 @@ dev_dependencies:
   auto_route_generator: ^10.6.0
   json_serializable: ^6.7.1
   drift_dev: ^2.32.0
+  flutter_launcher_icons: ^0.14.4
 
 dependency_overrides:
   web: ^1.0.0
+
+# 生成图标：dart run flutter_launcher_icons
+# 产物不入库，见 .gitignore
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: false
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 256
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
