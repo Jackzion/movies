@@ -54,6 +54,15 @@ class AnimeViewModel {
   /// 条目详情缓存（bangumiId → 原始响应）
   final Map<int, Map<String, dynamic>> _subjectCache = {};
 
+  /// 详情对象缓存（bangumiId → AnimeDetails）
+  final Map<int, AnimeDetails> _detailsCache = {};
+
+  /// 预告 / PV 缓存
+  final Map<int, List<AnimeTrailer>> _trailerCache = {};
+
+  /// 角色 / 声优缓存
+  final Map<int, List<AnimeCharacter>> _characterCache = {};
+
   /// 补充数据缓存是否已从本地加载
   bool _extrasLoaded = false;
 
@@ -305,12 +314,18 @@ class AnimeViewModel {
 
   /// 获取动漫详情
   Future<AnimeDetails?> getAnimeDetails(int animeId) async {
+    final cached = _detailsCache[animeId];
+    if (cached != null) {
+      return cached;
+    }
     try {
       final subject = await _getSubject(animeId);
       if (subject == null) {
         return null;
       }
-      return AnimeDetails.fromBangumi(subject);
+      final details = AnimeDetails.fromBangumi(subject);
+      _detailsCache[animeId] = details;
+      return details;
     } catch (e) {
       logError('Error loading anime details: $e');
       return null;
@@ -319,6 +334,10 @@ class AnimeViewModel {
 
   /// 获取动漫预告片 / PV 列表（来自 AniList，可能为空）
   Future<List<AnimeTrailer>> getAnimeTrailers(int animeId) async {
+    final cached = _trailerCache[animeId];
+    if (cached != null) {
+      return cached;
+    }
     String? nameJa;
     String? nameCn;
     final anime = findAnimeById(animeId);
@@ -333,9 +352,10 @@ class AnimeViewModel {
     final extras = await getExtras(animeId, nameJa, nameCn);
     final videoId = extras.youtubeId;
     if (videoId == null || videoId.isEmpty) {
-      return [];
+      _trailerCache[animeId] = const [];
+      return const [];
     }
-    return [
+    final trailers = [
       AnimeTrailer(
         title: 'PV',
         youtubeId: videoId,
@@ -343,21 +363,30 @@ class AnimeViewModel {
         imageUrl: extras.trailerThumbnail,
       ),
     ];
+    _trailerCache[animeId] = trailers;
+    return trailers;
   }
 
   /// 获取动漫角色和声优列表
   Future<List<AnimeCharacter>> getAnimeCharacters(int animeId) async {
+    final cached = _characterCache[animeId];
+    if (cached != null) {
+      return cached;
+    }
     try {
       final response = await bangumiApiService.getSubjectCharacters(animeId);
       if (response.statusCode == 200) {
         final data = response.data;
         if (data is! List<dynamic>) {
-          return [];
+          _characterCache[animeId] = const [];
+          return const [];
         }
-        return data
+        final characters = data
             .whereType<Map<String, dynamic>>()
             .map(AnimeCharacter.fromBangumi)
             .toList();
+        _characterCache[animeId] = characters;
+        return characters;
       }
       logError('Failed to load anime characters: ${response.statusCode}');
       return [];

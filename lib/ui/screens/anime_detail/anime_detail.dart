@@ -40,6 +40,15 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   String? bannerImage;
   List<AnimeTrailer> trailerVideos = [];
   List<AnimeCharacter> characters = [];
+  /// 缓存 Future：为空说明未加载过，不为空说明 loadData 已经执行过，不用再次加载
+  Future<void>? _loadFuture;
+  final ValueNotifier<bool> _favoriteNotifier = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    _favoriteNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +64,10 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
   }
 
   Widget buildScreen() {
-    return FutureBuilder(
-      future: loadData(),
+    // 缓存 Future：窗口缩放 / rebuild 不得重新拉接口
+    _loadFuture ??= loadData();
+    return FutureBuilder<void>(
+      future: _loadFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const NotReady();
@@ -75,9 +86,7 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
 
   Widget buildDetailScreen() {
     final details = animeDetails!;
-    final favoriteNotifier = ValueNotifier<bool>(
-      animeViewModel.isFavorite(widget.animeId),
-    );
+    _favoriteNotifier.value = animeViewModel.isFavorite(widget.animeId);
 
     return SafeArea(
       child: Scaffold(
@@ -106,15 +115,15 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
                   // 左完整 detail.image + 元信息；右章节/简介/标签
                   _buildPosterAndOverview(details),
                   ValueListenableBuilder<bool>(
-                    valueListenable: favoriteNotifier,
+                    valueListenable: _favoriteNotifier,
                     builder: (BuildContext context, bool value, Widget? child) {
                       return ButtonRow(
-                        favoriteSelected: favoriteNotifier.value,
+                        favoriteSelected: _favoriteNotifier.value,
                         onFavoriteSelected: () async {
                           await animeViewModel.toggleFavorite(
                             Anime(bangumiId: widget.animeId),
                           );
-                          favoriteNotifier.value = animeViewModel.isFavorite(
+                          _favoriteNotifier.value = animeViewModel.isFavorite(
                             widget.animeId,
                           );
                         },
