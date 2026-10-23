@@ -58,36 +58,38 @@ var verySmallText = roboto.copyWith(
   color: Colors.white,
 );
 
-// Colors
-const screenBackground = Color(0xFF111111);
-const searchBarBackground = Color(0xFF1E1E1E);
-const primaryButton = Color(0xFFD9D9D9);
-const posterBorder = Color(0xFFB5A9A9);
-const buttonGrey = Color(0xFF504F4F);
+// Colors — 追番琥珀 (Amber Tracking)
+const screenBackground = Color(0xFF0F172A); // page ink
+const searchBarBackground = Color(0xFF192134); // surface / dialog / nav
+const primaryButton = Color(0xFFF59E0B); // accent (CTA / selected)
+const posterBorder = Color(0xFF94A3B8); // muted text / soft border
+const buttonGrey = Color(0xFF243049); // secondary button / chip
+const surfaceBar = Color(0xFF101A34); // top bar / drawer
+const accentAmber = Color(0xFFF59E0B);
+const accentAmberLight = Color(0xFFFBBF24);
+const accentAmberDeep = Color(0xFFD97706);
+const textMuted = Color(0xFF94A3B8);
+const textSoft = Color(0xFFCBD5E1);
+const dangerRed = Color(0xFFDC2626);
+const successGreen = Color(0xFF22C55E);
+const dividerLine = Color(0xFF243049);
+const onAccent = Color(0xFF0F172A); // text/icon on amber
+const iconPlaceholder = Color(0xFF64748B);
 
 ThemeData createTheme() {
   return ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF2196F3),
-      primary: const Color(0xFF2196F3),
-      // Primary color (can be same as seed)
-      onPrimary: Colors.white,
-      // Text/icon color on primary background
-      secondary: const Color(0xFF90CAF9),
-      // Secondary color (lighter blue)
-      onSecondary: Colors.black,
-      // Background color (very light blue)
-      surfaceContainerHighest: Colors.black,
-      // Text/icon color on background
-      surface: const Color(0xFFBBDEFB),
-      // Surface color (cards, menus, etc.)
-      onSurface: Colors.black,
-      // Text/icon color on surface
-      error: const Color(0xFFB00020),
-      // Error color (red)
+    colorScheme: const ColorScheme(
+      brightness: Brightness.dark,
+      primary: accentAmber,
+      onPrimary: onAccent,
+      secondary: accentAmberLight,
+      onSecondary: onAccent,
+      surface: searchBarBackground,
+      onSurface: Colors.white,
+      error: dangerRed,
       onError: Colors.white,
-      // Text/icon color on error background
-      brightness: Brightness.light, // Overall brightness
+      surfaceContainerHighest: surfaceBar,
+      outline: dividerLine,
     ),
     textTheme: Typography.material2021().englishLike.copyWith(
       headlineLarge: heading1,
@@ -104,13 +106,13 @@ ThemeData createTheme() {
       labelSmall: caption,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black,
+      backgroundColor: surfaceBar,
+      foregroundColor: Colors.white,
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: searchBarBackground,
-      selectedItemColor: Colors.white,
-      unselectedLabelStyle: TextStyle(color: Colors.black),
+      selectedItemColor: accentAmber,
+      unselectedLabelStyle: TextStyle(color: posterBorder),
       showUnselectedLabels: true,
       unselectedItemColor: posterBorder,
     ),
@@ -128,7 +130,7 @@ ThemeData createTheme() {
       iconTheme: WidgetStateProperty.all<IconThemeData>(
         IconThemeData(color: Colors.white),
       ),
-      indicatorColor: posterBorder,
+      indicatorColor: accentAmber.withValues(alpha: 0.18),
     ),
   );
 }
