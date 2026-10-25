@@ -9,6 +9,11 @@ import 'package:movies/ui/theme/theme.dart';
 /// 用 Overlay / Stack 浮在业务页之上，**不** push 路由，避免：
 /// - 与 auto_route 返回栈冲突
 /// - 触发 AnimeDetail 等页无谓 rebuild（参见窗口缩放重载修复）
+///
+/// 输入框**常驻树上**（关着时 opacity=0）：
+/// - 中文 IME 只有在存在已聚焦的 [TextInput] 客户端时才会出拼音预编辑
+/// - 关闭后保持焦点，下一次拼音才能从第一个字母就进搜索框
+/// - 有文字 / 组合区时由 [GlobalSearchController] 展开本层
 class GlobalSearchOverlay extends StatelessWidget {
   const GlobalSearchOverlay({
     super.key,
@@ -29,91 +34,187 @@ class GlobalSearchOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 必须自带 Overlay：本层挂在 MaterialApp.builder 里、Navigator 之外，
+    // 没有祖先 Overlay。TextField 的选区菜单 / 右键菜单会 debugCheckHasOverlay
+    // 并抛 “No Overlay widget found”。
+    //
+    // 注意：OverlayEntry.builder 只在 entry 首次构建时求值一次，
+    // 外层 rebuild 不会让它重跑。因此 **必须** 在 entry 内再挂
+    // ListenableBuilder，由 controller 驱动 open/close 的显隐。
     return Positioned.fill(
-      child: Stack(
-        children: [
-          // 幕布：吃掉下层点击，点空白关闭
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: controller.close,
-              child: ColoredBox(
-                color: Colors.black.withValues(alpha: 0.55),
-              ),
-            ),
-          ),
-          // 居中超大输入框（限制最大宽，窗口很宽时也不拉变形）
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Material(
-                  color: searchBarBackground,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    // 焦点在大输入框时，Esc 先到这里的 Focus；
-                    // 根 Scope 的 onKeyEvent 不一定能抢到，故本层也处理一次
-                    child: Focus(
-                      onKeyEvent: (node, event) {
-                        if (event is KeyDownEvent &&
-                            event.logicalKey ==
-                                LogicalKeyboardKey.escape) {
-                          if (onEscape != null) {
-                            onEscape!();
-                          } else {
-                            controller.close();
-                          }
-                          return KeyEventResult.handled;
-                        }
-                        return KeyEventResult.ignored;
-                      },
-                      child: TextField(
-                        controller: controller.textController,
-                        focusNode: controller.fieldFocusNode,
-                        autofocus: true,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w600,
+      child: Overlay(
+        initialEntries: [
+          OverlayEntry(
+            builder: (context) {
+              return ListenableBuilder(
+                listenable: controller,
+                builder: (context, _) {
+                  final open = controller.isOpen;
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // 测试/调试用：仅 open 时存在
+                      if (open)
+                        const SizedBox(
+                          key: ValueKey('global_search_open'),
+                          width: 0,
+                          height: 0,
                         ),
-                        cursorColor: accentAmber,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: '搜索番剧…',
-                          hintStyle: const TextStyle(
-                            color: posterBorder,
-                            fontSize: 32,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          suffixIcon: const Icon(
-                            Icons.search,
-                            color: posterBorder,
-                            size: 32,
+                      // 幕布：仅打开时遮挡下层；点空白关闭
+                      if (open)
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: controller.close,
+                            child: ColoredBox(
+                              color: Colors.black.withValues(alpha: 0.55),
+                            ),
                           ),
                         ),
-                        textInputAction: TextInputAction.search,
-                        onSubmitted: (value) {
-                          if (onSubmitted != null) {
-                            onSubmitted!(value);
-                          } else {
-                            // Phase 1：未接搜索链路时先关闭
-                            controller.close();
-                          }
-                        },
+                      // 搜索卡片常驻：关着时用透明色「隐身」，不用 Opacity(0)。
+                      // 部分平台对 opacity=0 的文本框不投递 IME 组合区。
+                      Center(
+                        child: IgnorePointer(
+                          ignoring: !open,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 900),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 24),
+                              child: Material(
+                                color: open
+                                    ? searchBarBackground
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 8,
+                                  ),
+                                  child: Focus(
+                                    onKeyEvent: (node, event) {
+                                      if (event is KeyDownEvent &&
+                                          event.logicalKey ==
+                                              LogicalKeyboardKey.escape) {
+                                        if (onEscape != null) {
+                                          onEscape!();
+                                        } else {
+                                          controller.close();
+                                        }
+                                        return KeyEventResult.handled;
+                                      }
+                                      return KeyEventResult.ignored;
+                                    },
+                                    child: Shortcuts(
+                                      shortcuts:
+                                          const <ShortcutActivator, Intent>{
+                                        SingleActivator(LogicalKeyboardKey
+                                                .backspace):
+                                            _DeleteBackwardIntent(),
+                                        SingleActivator(
+                                                LogicalKeyboardKey.delete):
+                                            _DeleteForwardIntent(),
+                                      },
+                                      child: Actions(
+                                        actions: <Type, Action<Intent>>{
+                                          _DeleteBackwardIntent:
+                                              CallbackAction<
+                                                  _DeleteBackwardIntent>(
+                                            onInvoke: (_) {
+                                              if (controller.isComposing) {
+                                                return null;
+                                              }
+                                              controller.applyBackspace();
+                                              return null;
+                                            },
+                                          ),
+                                          _DeleteForwardIntent:
+                                              CallbackAction<
+                                                  _DeleteForwardIntent>(
+                                            onInvoke: (_) {
+                                              if (controller.isComposing) {
+                                                return null;
+                                              }
+                                              controller.applyForwardDelete();
+                                              return null;
+                                            },
+                                          ),
+                                        },
+                                        child: TextField(
+                                          key: const ValueKey(
+                                              'global_search_field'),
+                                          controller:
+                                              controller.textController,
+                                          focusNode: controller.fieldFocusNode,
+                                          autofocus: true,
+                                          autocorrect: false,
+                                          enableSuggestions: false,
+                                          enableIMEPersonalizedLearning: false,
+                                          smartDashesType:
+                                              SmartDashesType.disabled,
+                                          smartQuotesType:
+                                              SmartQuotesType.disabled,
+                                          style: TextStyle(
+                                            color: open
+                                                ? Colors.white
+                                                : Colors.transparent,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          cursorColor: open
+                                              ? accentAmber
+                                              : Colors.transparent,
+                                          decoration: InputDecoration(
+                                            border: InputBorder.none,
+                                            hintText: open ? '搜索番剧…' : '',
+                                            hintStyle: const TextStyle(
+                                              color: posterBorder,
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            suffixIcon: open
+                                                ? const Icon(
+                                                    Icons.search,
+                                                    color: posterBorder,
+                                                    size: 32,
+                                                  )
+                                                : null,
+                                          ),
+                                          textInputAction:
+                                              TextInputAction.search,
+                                          onSubmitted: (value) {
+                                            if (onSubmitted != null) {
+                                              onSubmitted!(value);
+                                            } else {
+                                              controller.close();
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+                    ],
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
     );
   }
+}
+
+class _DeleteBackwardIntent extends Intent {
+  const _DeleteBackwardIntent();
+}
+
+class _DeleteForwardIntent extends Intent {
+  const _DeleteForwardIntent();
 }
