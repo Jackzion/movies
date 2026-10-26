@@ -106,10 +106,16 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   Widget buildScreen() {
-    // SearchDialog / 菜单写入 searchTextProvider 时同步并触发搜索
+    // SearchDialog / 菜单 / 全局搜索写入 searchTextProvider 时同步并触发搜索
     final searchText = ref.watch(searchTextProvider);
     if (searchText != _lastSearchedText) {
       _lastSearchedText = searchText; // 只读记忆，没有任何地方会"回写"它
+      // 全局搜索同词双写会经过 ''：中间态不请求、不清列表，避免闪空
+      if (searchText.trim().isEmpty) {
+        return SafeArea(
+          child: _genreBody(context),
+        );
+      }
       currentAnimeList = [];
       expandedNotifier.value = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -117,82 +123,92 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
       });
     }
     return SafeArea(
-      child: Container(
-        color: screenBackground,
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildListDelegate(
-                      [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16.0, 0.0, 24.0),
-                          child: Text(
-                            'Find an Anime',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
+      child: _genreBody(context),
+    );
+  }
+
+  Widget _genreBody(BuildContext context) {
+    final searchText = ref.watch(searchTextProvider);
+    return Container(
+      color: screenBackground,
+      child: Column(
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16.0, 0.0, 24.0),
+                        child: Text(
+                          'Find an Anime',
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        GenreSearchRow(
-                          searchText,                       // buildScreen 里已经 ref.watch 拿到了
-                          (searchString) {
-                            // 只写 provider，其余交给 buildScreen 统一触发
-                            ref.read(searchTextProvider.notifier).state = searchString;
-                            FocusScope.of(context).unfocus();
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: expandedNotifier,
-                    builder: (BuildContext context, bool value, Widget? child) {
-                      return GenreSection(
-                        genreStates: genreStates,
-                        isExpanded: value,
-                        onGenresExpanded: (expanded) {
-                          expandedNotifier.value = expanded;
+                      ),
+                      GenreSearchRow(
+                        searchText,
+                        (searchString) {
+                          // 只写 provider，其余交给 buildScreen 统一触发
+                          ref.read(searchTextProvider.notifier).state = searchString;
+                          FocusScope.of(context).unfocus();
                         },
-                        onGenresSelected: (fullList) {
-                          // 保持全量列表，只同步选中状态
-                          genreStates = fullList;
-                          saveSelectedGenres();
-                        },
-                      );
-                    },
+                      ),
+                    ],
                   ),
-                  const SliverDivider(),
-                  SortPicker(
-                    selectedSort: selectedSort,
-                    onSortSelected: (sorting) {
-                      selectedSort = sorting;
-                      setState(() {});
-                    },
-                    useSliver: true,
-                  ),
-                  VerticalAnimeList(
-                    animes: currentAnimeList,
-                    onAnimeTap: (animeId) {
-                      context.router.push(AnimeDetailRoute(animeId: animeId));
-                    },
-                  ),
-                ],
-              ),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: expandedNotifier,
+                  builder: (BuildContext context, bool value, Widget? child) {
+                    return GenreSection(
+                      genreStates: genreStates,
+                      isExpanded: value,
+                      onGenresExpanded: (expanded) {
+                        expandedNotifier.value = expanded;
+                      },
+                      onGenresSelected: (fullList) {
+                        // 保持全量列表，只同步选中状态
+                        genreStates = fullList;
+                        saveSelectedGenres();
+                      },
+                    );
+                  },
+                ),
+                const SliverDivider(),
+                SortPicker(
+                  selectedSort: selectedSort,
+                  onSortSelected: (sorting) {
+                    selectedSort = sorting;
+                    setState(() {});
+                  },
+                  useSliver: true,
+                ),
+                VerticalAnimeList(
+                  animes: currentAnimeList,
+                  onAnimeTap: (animeId) {
+                    context.router.push(AnimeDetailRoute(animeId: animeId));
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   void search() async {
+    // 全局搜索双写 '' + keyword 时，空串不要打请求
+    final query = ref.read(searchTextProvider).trim();
+    if (query.isEmpty) {
+      return;
+    }
     final selectedTags = genreStates
         .where((state) => state.isSelected)
         .map((state) => state.genre.name)
         .toList();
     final animeList = await animeViewModel.searchAnimes(
-      ref.read(searchTextProvider),
+      query,
       1,
       selectedTags.isEmpty ? null : selectedTags,
     );

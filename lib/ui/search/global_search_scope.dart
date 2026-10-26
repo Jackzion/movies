@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/providers.dart';
 import 'package:movies/ui/search/global_search_controller.dart';
 import 'package:movies/ui/search/global_search_overlay.dart';
 
@@ -159,6 +161,24 @@ class _GlobalSearchScopeState extends State<GlobalSearchScope> {
     return _dispatch(event) ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 
+  /// Enter 提交：关框 → 切 Genre Tab → 写入 searchTextProvider。
+  /// GenreScreen 已 watch 该 provider，会自动 search()。
+  void _submitToGenre(String raw) {
+    final keyword = raw.trim();
+    _controller.close();
+    if (keyword.isEmpty) return;
+
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(currentNavIndexProvider.notifier).state = 1;
+
+    // 同词二次提交：Genre 靠 != _lastSearchedText 触发，先清再写
+    final notifier = container.read(searchTextProvider.notifier);
+    if (notifier.state == keyword) {
+      notifier.state = '';
+    }
+    notifier.state = keyword;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FocusScope(
@@ -174,6 +194,7 @@ class _GlobalSearchScopeState extends State<GlobalSearchScope> {
               return GlobalSearchOverlay(
                 controller: _controller,
                 onEscape: _controller.close,
+                onSubmitted: _submitToGenre,
               );
             },
           ),
