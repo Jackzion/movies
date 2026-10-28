@@ -34,6 +34,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   List<GenreState> genreStates = [];
   List<Anime> currentAnimeList = [];
   String _lastSearchedText = '';
+  String _lastSearchedTag = '';
   Sorting selectedSort = Sorting.aToz;
 
   /// 类型列表是否已初始化（避免每次 build 清空重建）
@@ -108,10 +109,19 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   Widget buildScreen() {
     // SearchDialog / 菜单 / 全局搜索写入 searchTextProvider 时同步并触发搜索
     final searchText = ref.watch(searchTextProvider);
-    if (searchText != _lastSearchedText) {
+    // 详情页点标签跳转写入 searchTagProvider，也要带着最新 genres 重新请求
+    final searchTag = ref.watch(searchTagProvider);
+    final textChanged = searchText != _lastSearchedText;
+    final tagChanged = searchTag != _lastSearchedTag;
+
+    // textChanged ||| tagChanged 才触发 search()
+    if (textChanged || tagChanged) {
       _lastSearchedText = searchText; // 只读记忆，没有任何地方会"回写"它
+      _lastSearchedTag = searchTag;
+      final hasText = searchText.trim().isNotEmpty;
+      final hasTag = searchTag.trim().isNotEmpty;
       // 全局搜索同词双写会经过 ''：中间态不请求、不清列表，避免闪空
-      if (searchText.trim().isEmpty) {
+      if (!hasText && !hasTag) {
         return SafeArea(
           child: _genreBody(context),
         );
@@ -128,11 +138,6 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   Widget _genreBody(BuildContext context) {
-    // watch searchText provider
-    final searchText = ref.watch(searchTextProvider);
-    // watch tag provider - 自动响应变化，触发 rebuild
-    final searchTag = ref.watch(searchTagProvider);
-
     return Container(
       color: screenBackground,
       child: Column(
@@ -151,7 +156,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                         ),
                       ),
                       GenreSearchRow(
-                        searchText,
+                        ref.watch(searchTextProvider),
                         (searchString) {
                           // 只写 provider，其余交给 buildScreen 统一触发
                           ref.read(searchTextProvider.notifier).state = searchString;
@@ -206,14 +211,18 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
     final query = ref.read(searchTextProvider).trim();
     // read tag provider
     final searchTag = ref.read(searchTagProvider).trim();
-    if (query.isEmpty) {
-      return;
-    }
     final selectedTags = genreStates
         .where((state) => state.isSelected)
         .map((state) => state.genre.name)
         .toList();
-    selectedTags.add(searchTag);
+    // 搜索 tag 并入最新 genres（已选同名时去重）
+    if (searchTag.isNotEmpty && !selectedTags.contains(searchTag)) {
+      selectedTags.add(searchTag);
+    }
+    // 关键字与标签都为空时不打请求（支持仅 tag 的搜索）
+    if (query.isEmpty && selectedTags.isEmpty) {
+      return;
+    }
     final animeList = await animeViewModel.searchAnimes(
       query,
       1,

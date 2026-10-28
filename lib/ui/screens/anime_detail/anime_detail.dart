@@ -201,12 +201,9 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
         // 切换到 Genre Tab
         final container = ProviderScope.containerOf(context, listen: false);
         container.read(currentNavIndexProvider.notifier).state = 1;
-        // 写入搜索词
+        // 写入搜索 tag；再点同一个 tag 视为取消（单次赋值，GenreScreen 才能感知变化）
         final notifier = container.read(searchTagProvider.notifier);
-        if (notifier.state == genre.name) {
-          notifier.state = '';
-        }
-        notifier.state = genre.name;
+        notifier.state = notifier.state == genre.name ? '' : genre.name;
         
         context.router.pop();
       },
