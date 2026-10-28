@@ -168,6 +168,7 @@ class _GlobalSearchScopeState extends State<GlobalSearchScope> {
     _controller.close();
     if (keyword.isEmpty) return;
 
+    // 切换到 Genre Tab
     final container = ProviderScope.containerOf(context, listen: false);
     container.read(currentNavIndexProvider.notifier).state = 1;
 

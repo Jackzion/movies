@@ -192,8 +192,24 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
     final overview = AnimeOverview(
       details: details,
       // 子组件函数外抛，能让父组件直接调用子组件交互参数典例
+      // 点章节:(1-based 集号) 回调
       onEpisodeTap: (ep) => _openSourceSheet(details, preferredEpisode: ep),
+      // 点观看:(不带集号) 回调
       onWatchTap: () => _openSourceSheet(details, preferredEpisode: null),
+      // 点标签:(标签名称) 回调
+      onTagTap: (genre){
+        // 切换到 Genre Tab
+        final container = ProviderScope.containerOf(context, listen: false);
+        container.read(currentNavIndexProvider.notifier).state = 1;
+        // 写入搜索词
+        final notifier = container.read(searchTagProvider.notifier);
+        if (notifier.state == genre.name) {
+          notifier.state = '';
+        }
+        notifier.state = genre.name;
+        
+        context.router.pop();
+      },
     );
 
     if (!isWide) {

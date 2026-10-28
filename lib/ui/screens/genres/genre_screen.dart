@@ -128,7 +128,11 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   Widget _genreBody(BuildContext context) {
+    // watch searchText provider
     final searchText = ref.watch(searchTextProvider);
+    // watch tag provider - 自动响应变化，触发 rebuild
+    final searchTag = ref.watch(searchTagProvider);
+
     return Container(
       color: screenBackground,
       child: Column(
@@ -200,6 +204,8 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   void search() async {
     // 全局搜索双写 '' + keyword 时，空串不要打请求
     final query = ref.read(searchTextProvider).trim();
+    // read tag provider
+    final searchTag = ref.read(searchTagProvider).trim();
     if (query.isEmpty) {
       return;
     }
@@ -207,6 +213,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
         .where((state) => state.isSelected)
         .map((state) => state.genre.name)
         .toList();
+    selectedTags.add(searchTag);
     final animeList = await animeViewModel.searchAnimes(
       query,
       1,

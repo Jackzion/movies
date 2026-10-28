@@ -18,6 +18,9 @@ class AnimeOverview extends StatefulWidget {
   /// 点章节:(1-based 集号) 回调
   final void Function(int episode)? onEpisodeTap;
 
+  /// 点标签:(标签名称) 回调
+  final void Function(Genre genre)? onTagTap;
+
   /// 「开始观看」等：不带集号
   final VoidCallback? onWatchTap;
 
@@ -27,6 +30,7 @@ class AnimeOverview extends StatefulWidget {
     this.onEpisodeTap,
     this.onWatchTap,
     this.overlapHeight = 0,
+    this.onTagTap,
   });
 
   @override
@@ -97,10 +101,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
       children: [
         Text(
           '章节列表',
-          style: GoogleFonts.notoSansSc(
-            fontSize: 15,
-            color: textSoft,
-          ),
+          style: GoogleFonts.notoSansSc(fontSize: 15, color: textSoft),
         ),
         if (showToggle) ...[
           const SizedBox(width: 6),
@@ -108,10 +109,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
             onTap: () => setState(() => _expandedChapters = !_expandedChapters),
             child: Text(
               _expandedChapters ? '[收起]' : '[全部]',
-              style: GoogleFonts.notoSansSc(
-                fontSize: 15,
-                color: accentAmber,
-              ),
+              style: GoogleFonts.notoSansSc(fontSize: 15, color: accentAmber),
             ),
           ),
         ],
@@ -120,10 +118,7 @@ class _AnimeOverviewState extends State<AnimeOverview>
           onTap: widget.onWatchTap,
           child: Text(
             '开始观看 ›',
-            style: GoogleFonts.notoSansSc(
-              fontSize: 15,
-              color: accentAmber,
-            ),
+            style: GoogleFonts.notoSansSc(fontSize: 15, color: accentAmber),
           ),
         ),
       ],
@@ -180,14 +175,15 @@ class _AnimeOverviewState extends State<AnimeOverview>
               runSpacing: 7,
               children: [
                 for (final genre in visible)
-                  _TagPill(name: genre.name, count: genre.count),
+                  _TagPill(
+                    name: genre.name,
+                    count: genre.count,
+                    onTap: () => widget.onTagTap?.call(genre),
+                  ),
                 if (hasMore)
-                  GestureDetector(
+                  _TagPill(
                     onTap: () => setState(() => _expandedTags = !_expandedTags),
-                    child: _TagPill(
-                      name: _expandedTags ? '收起' : '更多+',
-                      count: null,
-                    ),
+                    name: _expandedTags ? '收起' : '更多+',
                   ),
               ],
             ),
@@ -263,39 +259,46 @@ class _TagPill extends StatelessWidget {
   final String name;
   final int? count;
 
-  const _TagPill({required this.name, this.count});
+  // 点击回调，可空
+  final VoidCallback? onTap;
+
+  const _TagPill({required this.name, this.count, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      decoration: BoxDecoration(
-        color: buttonGrey,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            name,
-            style: GoogleFonts.notoSansSc(
-              fontSize: 13,
-              height: 1,
-              color: textSoft,
-            ),
-          ),
-          if (count != null) ...[
-            const SizedBox(width: 5),
-            Text(
-              '$count',
-              style: GoogleFonts.notoSansSc(
-                fontSize: 11,
-                height: 1,
-                color: posterBorder,
+    return Material(
+      color: buttonGrey, // ← 背景色从 Container 挪到这里
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap, // ← 标签 tag 点击事件
+        borderRadius: BorderRadius.circular(999), // 水波纹跟随胶囊圆角
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                name,
+                style: GoogleFonts.notoSansSc(
+                  fontSize: 13,
+                  height: 1,
+                  color: textSoft,
+                ),
               ),
-            ),
-          ],
-        ],
+              if (count != null) ...[
+                const SizedBox(width: 5),
+                Text(
+                  '$count',
+                  style: GoogleFonts.notoSansSc(
+                    fontSize: 11,
+                    height: 1,
+                    color: posterBorder,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

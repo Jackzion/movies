@@ -67,6 +67,8 @@ class BangumiApiService {
     if (sort != null) {
       body['sort'] = sort;
     }
+    // debug log
+    print('searchSubjects: $body');
     return dio.post(
       '/v0/search/subjects',
       queryParameters: {'limit': limit, 'offset': offset},

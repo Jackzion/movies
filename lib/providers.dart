@@ -78,6 +78,12 @@ final searchTextProvider = StateProvider<String>((ref) {
   return '';
 });
 
+/// 跨页面搜索tag
+/// SearchDialog 写入，GenreScreen 监听后触发搜索
+final searchTagProvider = StateProvider<String>((ref) {
+  return '';
+});
+
 /// 无头 WebView 取流服务（应用级单例）
 /// keepAlive: 整个 App 生命周期内复用同一个 HeadlessWebview
 @Riverpod(keepAlive: true)

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movies/data/models/genre.dart';
 import 'package:movies/data/models/genre_state.dart';
+import 'package:movies/providers.dart';
 import 'package:movies/ui/theme/theme.dart';
 
 typedef OnGenresSelected = void Function(List<GenreState>);
@@ -95,7 +97,14 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
     );
   }
 
+  // 生成标签 genre chips
   List<Widget> getGenreChips() {
+    // watch tag provider - 自动响应变化，触发 rebuild
+    final searchTag = ref.watch(searchTagProvider);
+    final searchGenre = Genre(malId: 0, name: searchTag);
+    // 放到 genre chips 第一个，并且标记选中
+    widget.genreStates.add(GenreState(genre: searchGenre,isSelected: true));
+
     return List<Widget>.generate(widget.genreStates.length, (index) {
       final genreState = widget.genreStates[index];
       return FilterChip(
