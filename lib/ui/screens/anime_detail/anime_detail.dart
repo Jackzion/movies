@@ -203,8 +203,13 @@ class _AnimeDetailState extends ConsumerState<AnimeDetail> {
         container.read(currentNavIndexProvider.notifier).state = 1;
         // 写入搜索 tag；再点同一个 tag 视为取消（单次赋值，GenreScreen 才能感知变化）
         final notifier = container.read(searchTagProvider.notifier);
-        notifier.state = notifier.state == genre.name ? '' : genre.name;
-        
+        final tags = List<String>.from(notifier.state);
+        if(!tags.contains(genre.name)){
+            tags.add(genre.name);
+        }
+        // 必须赋一个新列表实例，GenreScreen 的 watch 才能感知变化
+        notifier.state = tags;
+        // route to genres screen
         context.router.pop();
       },
     );

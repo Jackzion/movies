@@ -97,22 +97,27 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
     );
   }
 
-  /// 搜索 tag 是否需要作为临时 chip 展示
+  /// 搜索 tags 中尚未出现在 genreStates 的部分，作为临时 chip 展示
   /// 与已有同名 chip 去重（search() 里也会对请求 tag 去重）
-  bool get showSearchTagChip {
-    final searchTag = ref.watch(searchTagProvider).trim();
-    return searchTag.isNotEmpty &&
-        !widget.genreStates.any((s) => s.genre.name == searchTag);
+  List<String> get extraSearchTags {
+    final tags = ref.watch(searchTagProvider);
+    return [
+      for (final tag in tags)
+        if (tag.trim().isNotEmpty &&
+            !widget.genreStates.any((s) => s.genre.name == tag))
+          tag,
+    ];
   }
 
   // 生成标签 genre chips
   List<Widget> getGenreChips() {
     // watch tag provider - 自动响应变化，触发 rebuild
-    // 搜索 tag 仅作为临时选中项展示在最前，不写入 genreStates（build 期间不能有副作用）
+    // 搜索 tags 仅作为临时选中项展示在最前，不写入 genreStates（build 期间不能有副作用）
+    final extras = extraSearchTags;
     final displayStates = [
-      if (showSearchTagChip)
+      for (final tag in extras)
         GenreState(
-          genre: Genre(malId: 0, name: ref.watch(searchTagProvider).trim()),
+          genre: Genre(malId: 0, name: tag),
           isSelected: true,
         ),
       ...widget.genreStates,
@@ -132,13 +137,15 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
         ),
         selected: genreState.isSelected,
         onSelected: (selected) {
-          // 首个为搜索 tag chip：点击清除 tag，GenreScreen 监听后重新 search
-          if (showSearchTagChip && index == 0) {
-            ref.read(searchTagProvider.notifier).state = '';
+          // 前 extras.length 个为搜索 tag chip：点击从列表移除该 tag，GenreScreen 监听后重新 search
+          if (index < extras.length) {
+            final tags = List<String>.from(ref.read(searchTagProvider));
+            tags.remove(extras[index]);
+            ref.read(searchTagProvider.notifier).state = tags;
             return;
           }
-          // displayStates 前置了 tag chip 时，genreStates 下标需要回退用来获取 genreStates 真实index用来更新 isSelected
-          final genreIndex = index - (showSearchTagChip ? 1 : 0);
+          // displayStates 前置了 tag chips 时，genreStates 下标需要回退用来获取 genreStates 真实index用来更新 isSelected
+          final genreIndex = index - extras.length;
           setState(() {
             widget.genreStates[genreIndex] = genreState.copyWith(
               isSelected: selected,
@@ -156,7 +163,7 @@ class _GenreSectionState extends ConsumerState<GenreSection> {
   }
 
   int totalSelected() {
-    // 搜索 tag chip 也计入已选数量
-    return getSelectedGenres().length + (showSearchTagChip ? 1 : 0);
+    // 搜索 tag chips 也计入已选数量
+    return getSelectedGenres().length + extraSearchTags.length;
   }
 }

@@ -80,8 +80,8 @@ final searchTextProvider = StateProvider<String>((ref) {
 
 /// 跨页面搜索tag
 /// SearchDialog 写入，GenreScreen 监听后触发搜索
-final searchTagProvider = StateProvider<String>((ref) {
-  return '';
+final searchTagProvider = StateProvider<List<String>>((ref) {
+  return [];
 });
 
 /// 无头 WebView 取流服务（应用级单例）
