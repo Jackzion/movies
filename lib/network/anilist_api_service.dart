@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:movies/network/request_throttle.dart';
+import 'package:movies/network/timing_interceptor.dart';
 
 /// AniList GraphQL API 地址
 const String anilistApiUrl = 'https://graphql.anilist.co';
@@ -25,6 +26,8 @@ class AniListApiService {
         'Accept': 'application/json',
       },
     ));
+    // 计时拦截器：所有请求自动打印耗时
+    dio.interceptors.add(TimingInterceptor(tag: 'AniList'));
   }
 
   /// 查询字段：ID 映射、宽幅横幅、PV

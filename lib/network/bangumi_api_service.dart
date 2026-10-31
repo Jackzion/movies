@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:movies/network/request_throttle.dart';
+import 'package:movies/network/timing_interceptor.dart';
 
 /// Bangumi API 基础地址
 const String bangumiApiUrl = 'https://api.bgm.tv';
@@ -25,6 +26,9 @@ class BangumiApiService {
         'User-Agent': 'movies-app/1.0',
       },
     ));
+
+    // 计时拦截器：所有请求自动打印耗时
+    dio.interceptors.add(TimingInterceptor(tag: 'Bangumi'));
   }
 
   /// 获取每周放送日历（按星期分组的动画条目）
